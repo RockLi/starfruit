@@ -7,7 +7,9 @@
 package config
 
 import (
-	"time"
+	"encoding/json"
+	"io/ioutil"
+	_ "strconv"
 )
 
 type Config struct {
@@ -19,14 +21,62 @@ type Config struct {
 	BindPort int
 
 	PingUserInterval int
+	UserTimeout      int
 }
 
 func New() *Config {
 	cf := &Config{
 		ServerName:       "chat.starfruit.io",
 		SSL:              false,
-		PingUserInterval: time.Minute * 3,
+		BindIP:           "127.0.0.1",
+		BindPort:         6667,
+		PingUserInterval: 120,
+		UserTimeout:      300,
 	}
 
 	return cf
+}
+
+func (c *Config) LoadFromJSONFile(name string) error {
+	data, err := ioutil.ReadFile(name)
+	if err != nil {
+		return err
+	}
+
+	var configs map[string]interface{}
+
+	err = json.Unmarshal(data, &configs)
+	if err != nil {
+		return err
+	}
+
+	if ip, exists := configs["bind_ip"]; exists {
+		c.BindIP = ip.(string)
+	}
+
+	if port, exists := configs["bind_port"]; exists {
+		c.BindPort = int(port.(float64))
+	}
+
+	if serverName, exists := configs["server_name"]; exists {
+		c.ServerName = serverName.(string)
+	}
+
+	if password, exists := configs["password"]; exists {
+		c.Password = password.(string)
+	}
+
+	if enableSSL, exists := configs["enable_ssl"]; exists {
+		c.SSL = enableSSL.(bool)
+	}
+
+	if pingUserInterval, exists := configs["ping_user_interval"]; exists {
+		c.PingUserInterval = int(pingUserInterval.(float64))
+	}
+
+	if userTimeout, exists := configs["user_timeout"]; exists {
+		c.UserTimeout = int(userTimeout.(float64))
+	}
+
+	return nil
 }

@@ -8,6 +8,9 @@ package channel
 
 import (
 	"errors"
+	"fmt"
+	"github.com/flatpeach/ircd/message"
+	"github.com/flatpeach/ircd/user"
 )
 
 // Channel Namespace/Prefix
@@ -54,6 +57,8 @@ type Channel struct {
 	Name      string
 	Modes     int
 	Topic     string
+
+	users []*user.User
 }
 
 const (
@@ -66,7 +71,9 @@ func New(s string) (*Channel, error) {
 		return nil, errors.New("Channel name too long or too short")
 	}
 
-	c := &Channel{}
+	c := &Channel{
+		users: make([]*user.User, 0),
+	}
 
 	switch s[0:1] {
 	case NS_LOCAL_RAW:
@@ -116,4 +123,67 @@ func (c *Channel) String() string {
 	}
 
 	return s + c.Name
+}
+
+func (c *Channel) Join(newUser *user.User) error {
+
+	for _, u := range c.users {
+		if u.Id == newUser.Id {
+			return errors.New("Duplicated user")
+		}
+	}
+
+	c.users = append(c.users, newUser)
+
+	return nil
+}
+
+func (c *Channel) Quit(uid int) error {
+	for idx, u := range c.users {
+		if u.Id == uid {
+			users := c.users
+			users[idx] = users[len(users)-1]
+			users = users[:len(users)-1]
+			c.users = users
+			fmt.Println(c.users)
+			return nil
+		}
+	}
+
+	return errors.New("Failed to delete the user")
+}
+
+func (c *Channel) Broadcast(m *message.Message, exludes []int) error {
+outer:
+	for _, u := range c.users {
+
+		if exludes != nil {
+			for _, exludeId := range exludes {
+				if exludeId == u.Id {
+					continue outer
+				}
+			}
+		}
+		u.SendMessage(m)
+	}
+
+	return nil
+}
+
+func (c *Channel) Count() int {
+	return len(c.users)
+}
+
+func (c *Channel) JoinedUsers() []*user.User {
+	return c.users[:]
+}
+
+func (c *Channel) Exists(uid int) bool {
+	for _, u := range c.users {
+		if u.Id == uid {
+			return true
+		}
+	}
+
+	return false
 }

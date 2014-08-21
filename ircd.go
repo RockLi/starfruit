@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"crypto/rand"
 	"crypto/tls"
+	"flag"
 	"fmt"
 	_ "github.com/flatpeach/ircd/channel"
 	"github.com/flatpeach/ircd/command"
@@ -25,13 +26,14 @@ import (
 )
 
 var (
-	s        *server.Server
-	commands map[string]interface{}
+	s          *server.Server
+	commands   map[string]interface{}
+	configFile string
 )
 
 func doUserChecking() {
 	for {
-		time.Sleep(s.Config.PingUserInterval)
+		time.Sleep(time.Duration(s.Config.PingUserInterval) * time.Second)
 
 		ts := time.Now().Unix()
 
@@ -39,6 +41,22 @@ func doUserChecking() {
 
 		users := s.GetAllUsers()
 		for _, u := range users {
+
+			if u.LastPongTime != 0 && ts-u.LastPongTime > int64(s.Config.UserTimeout) {
+				// @Todo: Remove this use from server and sendout TimeOut message to users
+				timeoutMsg := &message.Message{
+					Prefix:  u.Full(),
+					Command: "QUIT",
+					Params: []string{
+						fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.UserTimeout)),
+					},
+				}
+
+				_ = timeoutMsg
+
+				continue
+			}
+
 			u.SendMessage(&message.Message{
 				Prefix:  s.Config.ServerName,
 				Command: "PING",
@@ -50,19 +68,6 @@ func doUserChecking() {
 
 		log.Printf("[SERVER] Done to scan the status of all users for this time")
 
-	}
-}
-
-func doReply(u *user.User) {
-	for m := range u.Out {
-		data := m.String() + "\r\n"
-		log.Printf("[Client:%s] Reply %s", u.Conn.RemoteAddr(), m.String())
-		_, err := u.Conn.Write([]byte(data))
-		if err != nil {
-			log.Printf("[Client:%s] Failed to send reply message")
-			// @Todo: send message to all joined channels of this user
-			s.RemoveUser(u.Id)
-		}
 	}
 }
 
@@ -95,15 +100,13 @@ func doConn(u *user.User) {
 	reader := bufio.NewReader(u.Conn)
 
 	go doRequest(u)
-	go doReply(u)
 
 	for {
 		buf, _, err := reader.ReadLine()
 		if err != nil {
 			log.Printf("[Client:%s] Remote connection already closed!", u.Conn.RemoteAddr())
+			s.RemoveUser(u.Id)
 			close(u.In)
-			close(u.Out)
-			u.Conn.Close()
 			break
 		}
 
@@ -123,13 +126,10 @@ func registerCmd(cmd string, v interface{}) {
 }
 
 func init() {
+	flag.StringVar(&configFile, "config", "./ircd.conf", "config file of this irc server")
+
 	s = server.New()
 	s.Config = config.New()
-	s.Config.Password = "1234567"
-	s.Config.ServerName = "chat.starfruit.io"
-	s.Config.SSL = false
-	s.Config.BindIP = "127.0.0.1"
-	s.Config.BindPort = 6667
 
 	commands = make(map[string]interface{})
 
@@ -150,9 +150,20 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
+	fmt.Println(configFile)
+
+	err := s.Config.LoadFromJSONFile(configFile)
+	if err != nil {
+		log.Fatalf("[SERVER] Failed to load the configuration file :%s", err)
+		return
+	}
+
+	log.Printf("[SERVER] Load the configuration file :%s", configFile)
+
 	var (
 		listener net.Listener = nil
-		err      error
 	)
 
 	if s.Config.SSL {

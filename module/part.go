@@ -40,7 +40,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	for _, channelName := range channelNames {
 		cnl := s.FindChannelByName(channelName)
-		if cnl != nil {
+		if cnl == nil {
 			continue
 		}
 
@@ -69,7 +69,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 			continue
 		}
 
-		s.BroadcastMessage(cnl.Id, &message.Message{
+		cnl.Broadcast(&message.Message{
 			Prefix:  u.Full(),
 			Command: "PART",
 			Params: []string{
@@ -78,7 +78,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 			Trailing: partMessage,
 		}, nil)
 
-		s.QuitFromChannel(u.Id, cnl.Id)
+		cnl.Quit(u.Id)
 
 	}
 

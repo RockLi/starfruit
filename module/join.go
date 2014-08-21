@@ -89,7 +89,7 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 			Trailing: "End of /NAMES list.",
 		})
 
-		s.BroadcastMessage(cnl.Id, joinMsg, nil)
+		cnl.Broadcast(joinMsg, nil)
 		s.JoinChannel(u.Id, cnl.Id)
 
 		// @Todo: Fix duplicated created channels in client side

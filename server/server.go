@@ -18,10 +18,10 @@ import (
 type Server struct {
 	Config *config.Config // Config for current IRC Server
 
-	channels       map[int]*channel.Channel // All channels in this server
-	users          map[int]*user.User       // All users existed in this server
-	channelToUsers map[int][]int            // Channel to users list
-	userToChannels map[int][]int            // User to channels list
+	channels map[int]*channel.Channel // All channels in this server
+	users    map[int]*user.User       // All users existed in this server
+
+	userToChannels map[int][]int // User to channels list
 
 	maxUserId    int // Current the max user id
 	maxChannelId int // current the max channel id
@@ -35,7 +35,6 @@ func New() *Server {
 
 		channels:       make(map[int]*channel.Channel),
 		users:          make(map[int]*user.User),
-		channelToUsers: make(map[int][]int),
 		userToChannels: make(map[int][]int),
 
 		maxUserId:    0,
@@ -71,16 +70,16 @@ func (s *Server) GetAllUsers() []*user.User {
 	return users
 }
 
-func (s *Server) ChannelUserCount(channelId int) int {
+func (s *Server) ChannelUserCount(cid int) int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	members, ok := s.channelToUsers[channelId]
-	if !ok {
-		return 0
+	cnl := s.channels[cid]
+	if cnl != nil {
+		return cnl.Count()
 	}
 
-	return len(members)
+	return 0
 }
 
 func (s *Server) FindChannelByName(c string) *channel.Channel {
@@ -148,7 +147,6 @@ func (s *Server) RemoveChannel(name string) error {
 	c := s.FindChannelByName(name)
 	if c != nil {
 		delete(s.channels, c.Id)
-		delete(s.channelToUsers, c.Id)
 	}
 
 	return nil
@@ -209,14 +207,16 @@ func (s *Server) RemoveUser(uid int) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	delete(s.users, uid)
-	delete(s.userToChannels, uid)
-
 	channels := s.getJoinedChannels(uid)
 
-	for _, c := range channels {
-		s.quitFromChannel(uid, c.Id)
+	fmt.Println(channels)
+
+	for _, cnl := range channels {
+		cnl.Quit(uid)
 	}
+
+	delete(s.users, uid)
+	delete(s.userToChannels, uid)
 
 }
 
@@ -232,16 +232,9 @@ func (s *Server) IsUserJoinedChannel(uid int, cid int) bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	channels, exists := s.userToChannels[uid]
-	fmt.Printf("|%v| %d\n", channels, cid)
-	if !exists {
-		return false
-	}
-
-	for _, channelId := range channels {
-		if channelId == cid {
-			return true
-		}
+	cnl := s.channels[cid]
+	if cnl != nil {
+		return cnl.Exists(uid)
 	}
 
 	return false
@@ -273,51 +266,46 @@ func (s *Server) GetJoinedUsers(cid int) []*user.User {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	uids, exists := s.channelToUsers[cid]
-	if !exists {
-		return nil
+	cnl := s.channels[cid]
+	if cnl != nil {
+		return cnl.JoinedUsers()
 	}
 
-	var users []*user.User
-
-	for _, uid := range uids {
-		users = append(users, s.users[uid])
-	}
-
-	return users
+	return nil
 }
 
 func (s *Server) BroadcastMessage(cid int, m *message.Message, excludeIds []int) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	uids, exists := s.channelToUsers[cid]
-	if !exists {
-		return
+	cnl := s.channels[cid]
+	if cnl != nil {
+		cnl.Broadcast(m, excludeIds)
 	}
-
-outer:
-	for _, uid := range uids {
-
-		if excludeIds != nil {
-			for _, exludeId := range excludeIds {
-				if exludeId == uid {
-					continue outer
-				}
-			}
-		}
-
-		u := s.users[uid]
-		u.SendMessage(m)
-	}
-
 }
 
 func (s *Server) JoinChannel(uid int, cid int) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.channelToUsers[cid] = append(s.channelToUsers[cid], uid)
+	cnl := s.channels[cid]
+	if cnl != nil {
+		u := s.users[uid]
+		if u != nil {
+			cnl.Join(u)
+		}
+	}
+
+	cids := s.userToChannels[uid]
+	if cids != nil {
+		for _, channelId := range cids {
+			if channelId == cid {
+				// Already in this channel
+				return
+			}
+		}
+
+	}
 	s.userToChannels[uid] = append(s.userToChannels[uid], cid)
 }
 
@@ -325,28 +313,8 @@ func (s *Server) QuitFromChannel(uid int, cid int) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.quitFromChannel(uid, cid)
-}
-
-func (s *Server) quitFromChannel(uid int, cid int) {
-	members := s.channelToUsers[cid]
-	for index, v := range members {
-		if v == uid {
-			members[index] = members[len(members)-1]
-			members = members[:len(members)-1]
-			s.channelToUsers[cid] = members
-			break
-		}
+	cnl := s.channels[cid]
+	if cnl != nil {
+		cnl.Quit(uid)
 	}
-
-	channels := s.userToChannels[uid]
-	for index, v := range channels {
-		if v == cid {
-			channels[index] = channels[len(channels)-1]
-			channels = channels[:len(channels)-1]
-			s.userToChannels[uid] = channels
-			break
-		}
-	}
-
 }

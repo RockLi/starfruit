@@ -38,8 +38,8 @@ func (module *Quit) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	channels := s.GetJoinedChannels(u.Id)
 	for _, cnl := range channels {
-		s.QuitFromChannel(u.Id, cnl.Id)
-		s.BroadcastMessage(cnl.Id, quitMsg, nil)
+		cnl.Broadcast(quitMsg, nil)
+		cnl.Quit(u.Id)
 	}
 
 	s.RemoveUser(u.Id)

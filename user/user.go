@@ -19,10 +19,9 @@ type User struct {
 	Conn   net.Conn       // Original TCP connection
 	Status string         // @Todo: Replace this one with FSM
 
-	LastPongTime int // Last time this user reply a PONG message
+	LastPongTime int64 // Last time this user reply a PONG message
 
-	Out chan *message.Message // Reply Message for this User
-	In  chan []byte
+	In chan []byte
 
 	Id int
 
@@ -48,7 +47,6 @@ func New(cf *config.Config, conn net.Conn) *User {
 		u.Status = "WaitingPassword"
 	}
 
-	u.Out = make(chan *message.Message)
 	u.In = make(chan []byte)
 
 	return u
@@ -79,7 +77,13 @@ func (u *User) PasswordVerified() bool {
 }
 
 func (u *User) SendMessage(m *message.Message) {
-	u.Out <- m
+	data := m.String() + "\r\n"
+	log.Printf("[Client:%s] Reply %s", u.Conn.RemoteAddr(), m.String())
+	_, err := u.Conn.Write([]byte(data))
+	if err != nil {
+		log.Printf("[Client:%s] Failed to send reply message")
+		u.Close()
+	}
 }
 
 func (u *User) SendWelcomeMessage() {

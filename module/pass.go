@@ -25,6 +25,11 @@ func (module *Pass) Handle(s *server.Server, u *user.User, m *message.Message) e
 		pwd = m.Trailing
 	}
 
+	if pwd == "" {
+		log.Printf("[COMMAND] PASS :no need to verify your password, server disabled that")
+		return nil
+	}
+
 	log.Printf("[COMMAND] PASS :%s|%s", u.Config.Password, pwd)
 
 	if u.Status != "WaitingPassword" && u.PasswordVerified() {

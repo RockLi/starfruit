@@ -21,6 +21,8 @@ type Server struct {
 	channels map[int]*channel.Channel // All channels in this server
 	users    map[int]*user.User       // All users existed in this server
 
+	nicknames map[string]*user.User
+
 	userToChannels map[int][]int // User to channels list
 
 	maxUserId    int // Current the max user id
@@ -34,6 +36,7 @@ func New() *Server {
 		Config: nil,
 
 		channels:       make(map[int]*channel.Channel),
+		nicknames:      make(map[string]*user.User),
 		users:          make(map[int]*user.User),
 		userToChannels: make(map[int][]int),
 
@@ -187,6 +190,7 @@ func (s *Server) RegisterUser(u *user.User) (bool, error) {
 	defer s.mutex.Unlock()
 
 	s.users[u.Id] = u
+	s.nicknames[u.NickName] = u
 	return true, nil
 }
 
@@ -215,9 +219,11 @@ func (s *Server) RemoveUser(uid int) {
 		cnl.Quit(uid)
 	}
 
+	u := s.users[uid]
+
+	delete(s.nicknames, u.NickName)
 	delete(s.users, uid)
 	delete(s.userToChannels, uid)
-
 }
 
 func (s *Server) ExistsUser(uid int) bool {
@@ -272,6 +278,15 @@ func (s *Server) GetJoinedUsers(cid int) []*user.User {
 	}
 
 	return nil
+}
+
+func (s *Server) IsNickNameRegistered(nick string) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	_, exists := s.nicknames[nick]
+
+	return exists
 }
 
 func (s *Server) BroadcastMessage(cid int, m *message.Message, excludeIds []int) {

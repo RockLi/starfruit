@@ -19,12 +19,7 @@ func (module *Ison) Handle(s *server.Server, u *user.User, m *message.Message) e
 	// ISON <nickname> *( SPACE <nickname> )
 
 	if len(m.Params) == 0 {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more params",
-		})
+		u.SendErrorNeedMoreParams("ISON")
 
 		return nil
 	}

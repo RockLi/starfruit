@@ -86,6 +86,24 @@ func (u *User) SendMessage(m *message.Message) {
 	}
 }
 
+func (u *User) SendErrorNeedMoreParams(c string) {
+	m := &message.Message{
+		Prefix:  u.Config.ServerName,
+		Command: message.ERR_NEEDMOREPARAMS,
+		Params: []string{
+			u.NickName,
+			c,
+		},
+		Trailing: "Not enough parameters",
+	}
+
+	if u.NickName == "" {
+		m.Params[0] = "*"
+	}
+
+	u.SendMessage(m)
+}
+
 func (u *User) SendWelcomeMessage() {
 	u.SendMessage(&message.Message{
 		Prefix:   u.Config.ServerName,

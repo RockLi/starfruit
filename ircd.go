@@ -147,6 +147,7 @@ func init() {
 	registerCmd("WHOIS", &module.Whois{})
 	registerCmd("PRIVMSG", &module.Privmsg{})
 	registerCmd("ISON", &module.Ison{})
+	registerCmd("TOPIC", &module.Topic{})
 	//registerCmd("NAMES", &module.Names{})
 }
 

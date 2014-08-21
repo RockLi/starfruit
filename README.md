@@ -23,6 +23,6 @@ I assume you already familiar with how to install go related packages.
 
 Enjoy to chat with this IRC server.
 
-Contributions
+Contributing
 ====
 Welcome to contribute!

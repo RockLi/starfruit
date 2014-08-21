@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/flatpeach/ircd/message"
 	"github.com/flatpeach/ircd/user"
+	"sync"
 )
 
 // Channel Namespace/Prefix
@@ -56,9 +57,10 @@ type Channel struct {
 	Namespace int
 	Name      string
 	Modes     int
-	Topic     string
 
+	topic string
 	users []*user.User
+	mutex sync.Mutex
 }
 
 const (
@@ -186,4 +188,18 @@ func (c *Channel) Exists(uid int) bool {
 	}
 
 	return false
+}
+
+func (c *Channel) SetTopic(s string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.topic = s
+}
+
+func (c *Channel) Topic() string {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.topic
 }

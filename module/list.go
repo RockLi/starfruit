@@ -47,7 +47,7 @@ func (module *List) Handle(s *server.Server, u *user.User, m *message.Message) e
 				cnl.Name,
 				fmt.Sprintf("%d", s.ChannelUserCount(cnl.Id)),
 			},
-			Trailing: cnl.Topic,
+			Trailing: cnl.Topic(),
 		})
 	}
 

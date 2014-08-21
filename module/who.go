@@ -19,7 +19,7 @@ type Who struct{}
 func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// WHO [ <mask> [ "o" ] ]
 
-	if len(m.Params) == 0 && m.Trailing == "" {
+	if len(m.Params) == 0 {
 		u.SendMessage(&message.Message{
 			Prefix:   s.Config.ServerName,
 			Command:  message.ERR_NEEDMOREPARAMS,
@@ -35,11 +35,7 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 		users       []*user.User
 	)
 
-	if m.Trailing != "" {
-		channelName = m.Trailing
-	} else {
-		channelName = m.Params[0]
-	}
+	channelName = m.Params[0]
 
 	cnl := s.FindChannelByName(channelName)
 	if cnl == nil {

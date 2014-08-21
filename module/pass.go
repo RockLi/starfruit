@@ -21,11 +21,9 @@ func (module *Pass) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	if len(m.Params) > 0 {
 		pwd = m.Params[0]
-	} else {
-		pwd = m.Trailing
 	}
 
-	if pwd == "" {
+	if s.Config.Password == "" {
 		log.Printf("[COMMAND] PASS :no need to verify your password, server disabled that")
 		return nil
 	}

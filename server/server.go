@@ -220,8 +220,9 @@ func (s *Server) RemoveUser(uid int) {
 	}
 
 	u := s.users[uid]
-
-	delete(s.nicknames, u.NickName)
+	if u != nil {
+		delete(s.nicknames, u.NickName)
+	}
 	delete(s.users, uid)
 	delete(s.userToChannels, uid)
 }

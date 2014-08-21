@@ -22,8 +22,6 @@ func (module *Away) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	if len(m.Params) == 1 {
 		awayMsg = m.Params[0]
-	} else {
-		awayMsg = m.Trailing
 	}
 
 	u.Away = awayMsg

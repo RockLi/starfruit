@@ -45,11 +45,7 @@ func (module *Privmsg) Handle(s *server.Server, u *user.User, m *message.Message
 		msgText string
 	)
 
-	if m.Trailing != "" {
-		msgText = m.Trailing
-	} else {
-		msgText = m.Params[1]
-	}
+	msgText = m.Params[1]
 
 	targetUser := s.GetUserByNickName(m.Params[0])
 	if targetUser != nil {

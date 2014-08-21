@@ -46,14 +46,8 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 		return nil
 	}
 
-	if len(m.Params) > 1 || m.Trailing != "" {
-		var newTopic string
-		if len(m.Params) > 1 {
-			newTopic = m.Params[1]
-		} else {
-			newTopic = m.Trailing
-		}
-
+	if len(m.Params) > 1 {
+		var newTopic = m.Params[1]
 		cnl.SetTopic(newTopic)
 
 		s.BroadcastMessage(cnl.Id, &message.Message{

@@ -37,8 +37,6 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	channels := strings.Split(channelsRaw, ",")
 
-	log.Printf("Channels: %v", channels)
-
 	for _, channelRaw := range channels {
 		cnl, err := s.FindOrCreateChannel(channelRaw)
 		if err != nil {

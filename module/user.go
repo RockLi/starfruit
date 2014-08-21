@@ -18,7 +18,7 @@ type User struct{}
 func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// USER <user> <mode> <unused> <realname>
 
-	if !(len(m.Params) == 4 || (len(m.Params) == 3 && m.Trailing != "")) {
+	if !(len(m.Params) == 4) {
 		u.SendMessage(&message.Message{
 			Prefix:   s.Config.ServerName,
 			Command:  message.ERR_NEEDMOREPARAMS,

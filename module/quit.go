@@ -19,9 +19,7 @@ func (module *Quit) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	var quitMessage string
 
-	if m.Trailing != "" {
-		quitMessage = m.Trailing
-	} else if len(m.Params) > 1 {
+	if len(m.Params) > 1 {
 		quitMessage = m.Params[0]
 	}
 

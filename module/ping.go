@@ -16,7 +16,7 @@ type Ping struct{}
 
 func (module *Ping) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// PING [SERVER]
-	if len(m.Params) == 0 && m.Trailing == "" {
+	if len(m.Params) != 1 {
 		u.SendMessage(&message.Message{
 			Prefix:   s.Config.ServerName,
 			Command:  message.ERR_NOORIGIN,
@@ -26,13 +26,7 @@ func (module *Ping) Handle(s *server.Server, u *user.User, m *message.Message) e
 		return nil
 	}
 
-	var server string
-
-	if m.Trailing != "" {
-		server = m.Trailing
-	} else {
-		server = m.Params[0]
-	}
+	server := m.Params[0]
 
 	u.SendMessage(&message.Message{
 		Prefix:   s.Config.ServerName,

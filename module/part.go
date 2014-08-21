@@ -30,9 +30,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	var partMessage string
 
-	if m.Trailing != "" {
-		partMessage = m.Trailing
-	} else if len(m.Params) > 1 {
+	if len(m.Params) > 1 {
 		partMessage = m.Params[1]
 	}
 

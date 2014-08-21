@@ -193,6 +193,7 @@ func NewFromRaw(s string) (*Message, error) {
 	trailingStart = strings.Index(s, " :")
 	if trailingStart >= 0 {
 		m.Trailing = s[trailingStart+2:]
+		m.Params = append(m.Params, m.Trailing)
 	} else {
 		trailingStart = len(s)
 	}
@@ -204,7 +205,7 @@ func NewFromRaw(s string) (*Message, error) {
 	}
 
 	m.Command = arr[0]
-	m.Params = arr[1:]
+	m.Params = append(arr[1:], m.Params[:]...)
 
 ret:
 	return m, err

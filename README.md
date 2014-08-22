@@ -1,4 +1,4 @@
-ircd
+ircd [![Build Status](https://travis-ci.org/flatpeach/ircd.svg)](https://travis-ci.org/flatpeach/ircd)
 ====
 
 Internet relay chat server which written in Golang.

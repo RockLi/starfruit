@@ -27,23 +27,17 @@ func (module *Away) Handle(s *server.Server, u *user.User, m *message.Message) e
 	u.Away = awayMsg
 
 	if u.Away == "" {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_UNAWAY,
-			Params: []string{
-				u.NickName,
-			},
-			Trailing: "You are no longer marked as being away",
-		})
+		u.SendMessage(message.New(s.Config.ServerName,
+			message.RPL_UNAWAY,
+			[]string{u.NickName},
+			"You are no longer marked as being away",
+		))
 	} else {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_NOWAWAY,
-			Params: []string{
-				u.NickName,
-			},
-			Trailing: "You have been marked as being away",
-		})
+		u.SendMessage(message.New(s.Config.ServerName,
+			message.RPL_NOWAWAY,
+			[]string{u.NickName},
+			"You have been marked as being away",
+		))
 	}
 
 	return nil

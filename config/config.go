@@ -22,16 +22,19 @@ type Config struct {
 
 	PingUserInterval int
 	UserTimeout      int
+
+	MotdFile string
 }
 
 func New() *Config {
 	cf := &Config{
-		ServerName:       "chat.starfruit.io",
+		ServerName:       "localhost",
 		SSL:              false,
 		BindIP:           "127.0.0.1",
 		BindPort:         6667,
 		PingUserInterval: 120,
 		UserTimeout:      300,
+		MotdFile:         "",
 	}
 
 	return cf
@@ -76,6 +79,10 @@ func (c *Config) LoadFromJSONFile(name string) error {
 
 	if userTimeout, exists := configs["user_timeout"]; exists {
 		c.UserTimeout = int(userTimeout.(float64))
+	}
+
+	if motd, exists := configs["motd_file"]; exists {
+		c.MotdFile = motd.(string)
 	}
 
 	return nil

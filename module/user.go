@@ -19,12 +19,12 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 	// USER <user> <mode> <unused> <realname>
 
 	if !(len(m.Params) == 4) {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more params",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NEEDMOREPARAMS,
+			nil,
+			"Need more params",
+		))
 
 		return nil
 	}
@@ -37,23 +37,15 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 			mode, _ := strconv.Atoi(m.Params[1])
 			u.Mode = int32(mode)
 		}
-		u.HostName = m.Params[2]
-		if u.HostName == "" {
-			// @Todo: fix hostname
-		}
-
-		if m.Trailing != "" {
-			u.RealName = m.Trailing
-		} else {
-			u.RealName = m.Params[3]
-		}
+		u.HostName = m.Params[2] // @Todo: fix the hostname here
+		u.RealName = m.Params[3]
 	}
 
 	if u.NickName != "" {
 		// Everything is ok, register this user to the server user list
 		u.Id = s.NewUserId()
 		s.RegisterUser(u)
-
+		u.EnterStatus(user.Registered)
 		u.SendWelcomeMessage()
 	}
 

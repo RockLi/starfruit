@@ -23,16 +23,19 @@ func (module *Quit) Handle(s *server.Server, u *user.User, m *message.Message) e
 		quitMessage = m.Params[0]
 	}
 
-	u.SendMessage(&message.Message{
-		Command:  "ERROR",
-		Trailing: quitMessage,
-	})
+	u.SendMessage(message.New(
+		nil,
+		"ERROR",
+		nil,
+		quitMessage,
+	))
 
-	quitMsg := &message.Message{
-		Prefix:   u.Full(),
-		Command:  "QUIT",
-		Trailing: quitMessage,
-	}
+	quitMsg := message.New(
+		u.Full(),
+		"QUIT",
+		nil,
+		quitMessage,
+	)
 
 	channels := s.GetJoinedChannels(u.Id)
 	for _, cnl := range channels {

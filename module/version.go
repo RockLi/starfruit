@@ -7,33 +7,27 @@
 package module
 
 import (
+	"fmt"
 	"github.com/flatpeach/ircd/message"
 	"github.com/flatpeach/ircd/server"
 	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/ircd/version"
 )
 
-type Ping struct{}
+type Version struct{}
 
-func (module *Ping) Handle(s *server.Server, u *user.User, m *message.Message) error {
-	// PING [SERVER]
-	if len(m.Params) != 1 {
-		u.SendMessage(message.New(
-			s.Config.ServerName,
-			message.ERR_NOORIGIN,
-			[]string{u.NickName},
-			"No origin specified",
-		))
-
-		return nil
-	}
-
-	server := m.Params[0]
+func (module *Version) Handle(s *server.Server, u *user.User, m *message.Message) error {
+	// VERSION [ <target> ]
 
 	u.SendMessage(message.New(
 		s.Config.ServerName,
-		"PONG",
-		[]string{s.Config.ServerName},
-		server,
+		message.RPL_VERSION,
+		[]string{
+			u.NickName,
+			fmt.Sprintf("%d.%d(%s)", version.Major, version.Minor, version.PatchLevel),
+			s.Config.ServerName,
+		},
+		version.MagicCode,
 	))
 
 	return nil

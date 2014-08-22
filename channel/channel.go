@@ -12,6 +12,7 @@ import (
 	"github.com/flatpeach/ircd/message"
 	"github.com/flatpeach/ircd/user"
 	"sync"
+	"time"
 )
 
 // Channel Namespace/Prefix
@@ -58,9 +59,11 @@ type Channel struct {
 	Name      string
 	Modes     int
 
-	topic string
-	users []*user.User
-	mutex sync.Mutex
+	topic        string
+	users        []*user.User
+	topicSetBy   string
+	topicSettime int64
+	mutex        sync.Mutex
 }
 
 const (
@@ -190,11 +193,13 @@ func (c *Channel) Exists(uid int) bool {
 	return false
 }
 
-func (c *Channel) SetTopic(s string) {
+func (c *Channel) SetTopic(s string, who string) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	c.topic = s
+	c.topicSetBy = who
+	c.topicSettime = time.Now().Unix()
 }
 
 func (c *Channel) Topic() string {
@@ -202,4 +207,18 @@ func (c *Channel) Topic() string {
 	defer c.mutex.Unlock()
 
 	return c.topic
+}
+
+func (c *Channel) TopicSetBy() string {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.topicSetBy
+}
+
+func (c *Channel) TopicSetTime() int {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.TopicSetTime()
 }

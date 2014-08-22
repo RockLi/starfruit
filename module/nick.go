@@ -17,12 +17,12 @@ type Nick struct{}
 func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// NICK <nickname>
 	if len(m.Params) != 1 {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more params",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NEEDMOREPARAMS,
+			nil,
+			"Need more params",
+		))
 
 		return nil
 	}
@@ -32,6 +32,7 @@ func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) e
 	if u.UserName != "" {
 		u.Id = s.NewUserId()
 		s.RegisterUser(u)
+		u.EnterStatus(user.Registered)
 		u.SendWelcomeMessage()
 	}
 

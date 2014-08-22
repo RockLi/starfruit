@@ -19,12 +19,12 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 	// WHOIS <mask> *( "," <mask> )
 
 	if len(m.Params) != 1 {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more params",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NEEDMOREPARAMS,
+			nil,
+			"Need more params",
+		))
 
 		return nil
 	}
@@ -37,58 +37,58 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 			continue
 		}
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_WHOISUSER,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_WHOISUSER,
+			[]string{
 				u.NickName,
 				target.NickName,
 				target.UserName,
 				target.HostName,
 				"*",
 			},
-			Trailing: u.RealName,
-		})
+			u.RealName,
+		))
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_WHOISSERVER,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_WHOISSERVER,
+			[]string{
 				u.NickName,
 				target.NickName,
 				s.Config.ServerName,
 			},
-			Trailing: s.Config.ServerName,
-		})
+			s.Config.ServerName,
+		))
 
 		joinedChannels := s.GetJoinedChannels(u.Id)
 		if len(joinedChannels) > 0 {
-			u.SendMessage(&message.Message{
-				Prefix:  s.Config.ServerName,
-				Command: message.RPL_WHOISCHANNELS,
-				Params: []string{
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				message.RPL_WHOISCHANNELS,
+				[]string{
 					u.NickName,
 					target.NickName,
 				},
-				Trailing: strings.Join((func() []string {
+				strings.Join((func() []string {
 					var names []string
 					for _, cnl := range joinedChannels {
 						names = append(names, cnl.String())
 					}
 					return names
 				})(), " "),
-			})
+			))
 		}
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_ENDOFWHOIS,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_ENDOFWHOIS,
+			[]string{
 				u.NickName,
 				target.NickName,
 			},
-			Trailing: "End of /WHOIS list.",
-		})
+			"End of /WHOIS list.",
+		))
 	}
 
 	return nil

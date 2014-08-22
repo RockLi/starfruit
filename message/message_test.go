@@ -13,7 +13,7 @@ import (
 func TestMessage1(t *testing.T) {
 	line := "USER rocklee 8 * :RockLee"
 
-	m, err := NewFromRaw(line)
+	m, err := New(line)
 
 	if err != nil {
 		t.Error("Should no error happened")
@@ -47,7 +47,7 @@ func TestMessage1(t *testing.T) {
 func TestMessage2(t *testing.T) {
 	line := ":Rock!rock@localhost PRIVMSG #abord :你好,世界!"
 
-	m, err := NewFromRaw(line)
+	m, err := New(line)
 	if err != nil {
 		t.Error("error happened")
 	}
@@ -73,7 +73,7 @@ func TestMessage2(t *testing.T) {
 func TestMessageEmptyTrailing(t *testing.T) {
 	line := ":prefix command param1 param2 :"
 
-	m, err := NewFromRaw(line)
+	m, err := New(line)
 
 	if err != nil {
 		t.Error("error happened")
@@ -82,12 +82,16 @@ func TestMessageEmptyTrailing(t *testing.T) {
 	if len(m.Params) != 3 {
 		t.Error("should has param1, param2 and emptry trailing as the param3")
 	}
+
+	if !m.HasTrailing() || m.Trailing != "" {
+		t.Error("message should has empty trailing part")
+	}
 }
 
 func TestMessage3(t *testing.T) {
 	line := ":prefix command param1 param2"
 
-	m, err := NewFromRaw(line)
+	m, err := New(line)
 
 	if err != nil {
 		t.Error("error happened")

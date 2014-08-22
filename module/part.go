@@ -19,12 +19,12 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 	// PART <channel> *( "," <channel> ) [ <Part Message> ]
 
 	if len(m.Params) < 1 {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more parameters.",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NEEDMOREPARAMS,
+			nil,
+			"Need more parameters.",
+		))
 		return nil
 	}
 
@@ -43,38 +43,36 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 		}
 
 		if cnl == nil {
-			u.SendMessage(&message.Message{
-				Prefix:  s.Config.ServerName,
-				Command: message.ERR_NOSUCHCHANNEL,
-				Params: []string{
-					channelName,
-				},
-				Trailing: "You are not on that channel.",
-			})
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				message.ERR_NOSUCHCHANNEL,
+				[]string{channelName},
+				"You are not on that channel.",
+			))
+
 			continue
 		}
 
 		if !s.IsUserJoinedChannel(u.Id, cnl.Id) {
-			u.SendMessage(&message.Message{
-				Prefix:  s.Config.ServerName,
-				Command: message.ERR_NOTONCHANNEL,
-				Params: []string{
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				message.ERR_NOTONCHANNEL,
+				[]string{
 					u.NickName,
 					channelName,
 				},
-				Trailing: "You are not on that channel.",
-			})
+				"You are not on that channel.",
+			))
+
 			continue
 		}
 
-		cnl.Broadcast(&message.Message{
-			Prefix:  u.Full(),
-			Command: "PART",
-			Params: []string{
-				channelName,
-			},
-			Trailing: partMessage,
-		}, nil)
+		cnl.Broadcast(message.New(
+			u.Full(),
+			"PART",
+			[]string{channelName},
+			partMessage,
+		), nil)
 
 		cnl.Quit(u.Id)
 

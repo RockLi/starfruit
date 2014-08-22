@@ -20,12 +20,12 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 	// WHO [ <mask> [ "o" ] ]
 
 	if len(m.Params) == 0 {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NEEDMOREPARAMS,
-			Params:   nil,
-			Trailing: "Need more params",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NEEDMOREPARAMS,
+			nil,
+			"Need more params",
+		))
 
 		return nil
 	}
@@ -50,10 +50,10 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 
 	users = s.GetJoinedUsers(cnl.Id)
 	for _, user := range users {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_WHOREPLY,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_WHOREPLY,
+			[]string{
 				u.NickName,
 				channelName,
 				"~" + user.UserName,
@@ -62,17 +62,17 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 				user.NickName,
 				"H@",
 			},
-			Trailing: fmt.Sprintf("0 %s", user.RealName),
-		})
+			fmt.Sprintf("0 %s", user.RealName),
+		))
 	}
 
 endofwho:
-	u.SendMessage(&message.Message{
-		Prefix:   s.Config.ServerName,
-		Command:  message.RPL_ENDOFWHO,
-		Params:   []string{u.NickName, channelName},
-		Trailing: "End of /WHO list.",
-	})
+	u.SendMessage(message.New(
+		s.Config.ServerName,
+		message.RPL_ENDOFWHO,
+		[]string{u.NickName, channelName},
+		"End of /WHO list.",
+	))
 
 	return nil
 }

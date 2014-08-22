@@ -39,24 +39,24 @@ func (module *List) Handle(s *server.Server, u *user.User, m *message.Message) e
 	}
 
 	for _, cnl := range channelsToList {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_LIST,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_LIST,
+			[]string{
 				u.NickName,
 				cnl.Name,
 				fmt.Sprintf("%d", s.ChannelUserCount(cnl.Id)),
 			},
-			Trailing: cnl.Topic(),
-		})
+			cnl.Topic(),
+		))
 	}
 
-	u.SendMessage(&message.Message{
-		Prefix:   s.Config.ServerName,
-		Command:  message.RPL_LISTEND,
-		Params:   []string{u.NickName},
-		Trailing: "End of /LIST.",
-	})
+	u.SendMessage(message.New(
+		s.Config.ServerName,
+		message.RPL_LISTEND,
+		[]string{u.NickName},
+		"End of /LIST.",
+	))
 
 	return nil
 }

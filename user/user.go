@@ -7,24 +7,32 @@
 package user
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/flatpeach/ircd/config"
 	"github.com/flatpeach/ircd/message"
 	"log"
 	"net"
+	"os"
+)
+
+const (
+	PasswordNotVerified = iota
+	PasswordVerified
+	NotRegistered
+	Registered
 )
 
 type User struct {
 	Config *config.Config // Global Server Config
 	Conn   net.Conn       // Original TCP connection
-	Status string         // @Todo: Replace this one with FSM
+	status int            // @Todo: Replace this with real FSM
 
 	LastPongTime int64 // Last time this user reply a PONG message
 
 	In chan []byte
 
-	Id int
-
+	Id       int
 	UserName string
 	NickName string
 	RealName string
@@ -42,14 +50,22 @@ func New(cf *config.Config, conn net.Conn) *User {
 	}
 
 	if cf.Password == "" {
-		u.Status = "PasswordVerified"
+		u.EnterStatus(PasswordVerified)
 	} else {
-		u.Status = "WaitingPassword"
+		u.EnterStatus(PasswordNotVerified)
 	}
 
 	u.In = make(chan []byte)
 
 	return u
+}
+
+func (u *User) IsRegistered() bool {
+	if u.status == Registered {
+		return true
+	}
+
+	return false
 }
 
 func (u *User) Full() string {
@@ -68,8 +84,8 @@ func (u *User) Close() {
 	}
 }
 
-func (u *User) PasswordVerified() bool {
-	if u.Status != "WaitingPassword" {
+func (u *User) IsPasswordVerified() bool {
+	if u.status >= PasswordVerified {
 		return true
 	}
 
@@ -87,15 +103,15 @@ func (u *User) SendMessage(m *message.Message) {
 }
 
 func (u *User) SendErrorNeedMoreParams(c string) {
-	m := &message.Message{
-		Prefix:  u.Config.ServerName,
-		Command: message.ERR_NEEDMOREPARAMS,
-		Params: []string{
+	m := message.New(
+		u.Config.ServerName,
+		message.ERR_NEEDMOREPARAMS,
+		[]string{
 			u.NickName,
 			c,
 		},
-		Trailing: "Not enough parameters",
-	}
+		"Not enough parameters",
+	)
 
 	if u.NickName == "" {
 		m.Params[0] = "*"
@@ -104,67 +120,103 @@ func (u *User) SendErrorNeedMoreParams(c string) {
 	u.SendMessage(m)
 }
 
+func (u *User) EnterStatus(s int) {
+	u.status = s
+}
+
+func (u *User) Status() int {
+	return u.status
+}
+
+func (u *User) SendMotd() {
+
+	file, err := os.Open(u.Config.MotdFile)
+	if err != nil {
+		u.SendMessage(message.New(
+			u.Config.ServerName,
+			message.ERR_NOMOTD,
+			nil,
+			"MOTD File is missing",
+		))
+
+		return
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		message.RPL_MOTDSTART,
+		[]string{u.NickName},
+		fmt.Sprintf("- %s Message of the day -", u.Config.ServerName),
+	))
+
+	for {
+		buf, _, err := reader.ReadLine()
+		if err != nil {
+			break
+		}
+
+		u.SendMessage(message.New(
+			u.Config.ServerName,
+			message.RPL_MOTD,
+			[]string{u.NickName},
+			fmt.Sprintf("- %s -", buf),
+		))
+
+	}
+
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		message.RPL_ENDOFMOTD,
+		[]string{u.NickName},
+		"End of /MOTD command.",
+	))
+}
+
 func (u *User) SendWelcomeMessage() {
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  message.RPL_WELCOME,
-		Params:   []string{u.NickName},
-		Trailing: fmt.Sprintf("Welcome to %s", u.Config.ServerName),
-	})
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		message.RPL_WELCOME,
+		[]string{u.NickName},
+		fmt.Sprintf("Welcome to %s", u.Config.ServerName),
+	))
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "002",
-		Params:   []string{u.NickName},
-		Trailing: "xxx",
-	})
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		"002",
+		[]string{u.NickName},
+		"xxx",
+	))
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "003",
-		Params:   []string{u.NickName},
-		Trailing: "xxx",
-	})
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		"003",
+		[]string{u.NickName},
+		"xxx",
+	))
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "004",
-		Params:   []string{u.NickName},
-		Trailing: "xxx",
-	})
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		"004",
+		[]string{u.NickName},
+		"xxx",
+	))
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "005",
-		Params:   []string{u.NickName},
-		Trailing: "xxx",
-	})
+	u.SendMessage(message.New(
+		u.Config.ServerName,
+		"005",
+		[]string{u.NickName},
+		"xxx",
+	))
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "375",
-		Params:   []string{u.NickName},
-		Trailing: "im.starfruit.io Message of the day",
-	})
+	u.SendMotd()
 
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  "372",
-		Params:   []string{u.NickName},
-		Trailing: "good",
-	})
-
-	u.SendMessage(&message.Message{
-		Prefix:   u.Config.ServerName,
-		Command:  message.RPL_ENDOFMOTD,
-		Params:   []string{u.NickName},
-		Trailing: "End of /MOTD command.",
-	})
-
-	u.SendMessage(&message.Message{
-		Prefix:   u.Full(),
-		Command:  "MODE",
-		Params:   []string{u.NickName},
-		Trailing: "+i",
-	})
+	u.SendMessage(message.New(
+		u.Full(),
+		"MODE",
+		[]string{u.NickName},
+		"+i",
+	))
 }

@@ -18,27 +18,25 @@ func (module *Privmsg) Handle(s *server.Server, u *user.User, m *message.Message
 	// PRIVMSG <target> <text>
 
 	if len(m.Params) == 0 {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.ERR_NORECIPIENT,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NORECIPIENT,
+			[]string{
 				u.NickName,
 			},
-			Trailing: "No recipient given",
-		})
+			"No recipient given",
+		))
 
 		return nil
 	}
 
 	if len(m.Params) == 1 && m.Trailing == "" {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.ERR_NOTEXTTOSEND,
-			Params: []string{
-				u.NickName,
-			},
-			Trailing: "No text to send",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NOTEXTTOSEND,
+			[]string{u.NickName},
+			"No text to send",
+		))
 	}
 
 	var (
@@ -50,40 +48,40 @@ func (module *Privmsg) Handle(s *server.Server, u *user.User, m *message.Message
 	targetUser := s.GetUserByNickName(m.Params[0])
 	if targetUser != nil {
 		// Send msg to specific user
-		targetUser.SendMessage(&message.Message{
-			Prefix:  u.Full(),
-			Command: "PRIVMSG",
-			Params: []string{
-				targetUser.NickName,
-			},
-			Trailing: msgText,
-		})
+		targetUser.SendMessage(message.New(
+			u.Full(),
+			"PRIVMSG",
+			[]string{targetUser.NickName},
+			msgText,
+		))
+
 		return nil
 	}
 
 	cnl := s.FindChannelByName(m.Params[0])
 	if cnl != nil {
 		// Send msg to specific channel
-		msg := &message.Message{
-			Prefix:  u.Full(),
-			Command: "PRIVMSG",
-			Params: []string{
+		msg := message.New(
+			u.Full(),
+			"PRIVMSG",
+			[]string{
 				cnl.String(),
 			},
-			Trailing: msgText,
-		}
+			msgText,
+		)
 		s.BroadcastMessage(cnl.Id, msg, []int{u.Id}) // @Todo: implement the exclude ids logic
 		return nil
 	}
 
-	u.SendMessage(&message.Message{
-		Prefix:  s.Config.ServerName,
-		Command: message.ERR_NOSUCHNICK,
-		Params: []string{
+	u.SendMessage(message.New(
+		s.Config.ServerName,
+		message.ERR_NOSUCHNICK,
+		[]string{
 			u.NickName,
 			m.Params[0],
 		},
-	})
+		nil,
+	))
 
 	return nil
 }

@@ -44,30 +44,31 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 			return nil
 		}
 
-		joinMsg := &message.Message{
-			Prefix:   u.Full(),
-			Command:  "JOIN",
-			Params:   nil,
-			Trailing: cnl.String(),
-		}
+		joinMsg := message.New(
+			u.Full(),
+			"JOIN",
+			nil,
+			cnl.String(),
+		)
 
 		u.SendMessage(joinMsg)
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: "MODE",
-			Params:  []string{cnl.String(), "+nt"},
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			"MODE",
+			[]string{cnl.String(), "+nt"},
+			nil,
+		))
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_NAMREPLY,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_NAMREPLY,
+			[]string{
 				u.NickName,
 				"=",
 				cnl.String(),
 			},
-			Trailing: (func() string {
+			(func() string {
 				var names []string = []string{"@" + u.NickName}
 				users := s.GetJoinedUsers(cnl.Id)
 				for _, u := range users {
@@ -75,17 +76,17 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 				}
 				return strings.Join(names, " ")
 			})(),
-		})
+		))
 
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_ENDOFNAMES,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_ENDOFNAMES,
+			[]string{
 				u.NickName,
 				cnl.String(),
 			},
-			Trailing: "End of /NAMES list.",
-		})
+			"End of /NAMES list.",
+		))
 
 		cnl.Broadcast(joinMsg, nil)
 		s.JoinChannel(u.Id, cnl.Id)

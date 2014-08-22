@@ -32,14 +32,12 @@ func (module *Ison) Handle(s *server.Server, u *user.User, m *message.Message) e
 		}
 	}
 
-	u.SendMessage(&message.Message{
-		Prefix:  s.Config.ServerName,
-		Command: message.RPL_ISON,
-		Params: []string{
-			u.NickName,
-		},
-		Trailing: strings.Join(existedNickNames, " "),
-	})
+	u.SendMessage(message.New(
+		s.Config.ServerName,
+		message.RPL_ISON,
+		[]string{u.NickName},
+		strings.Join(existedNickNames, " "),
+	))
 
 	return nil
 }

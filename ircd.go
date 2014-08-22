@@ -44,26 +44,28 @@ func doUserChecking() {
 
 			if u.LastPongTime != 0 && ts-u.LastPongTime > int64(s.Config.UserTimeout) {
 				// @Todo: Remove this use from server and sendout TimeOut message to users
-				timeoutMsg := &message.Message{
-					Prefix:  u.Full(),
-					Command: "QUIT",
-					Params: []string{
+				timeoutMsg := message.New(
+					u.Full(),
+					"QUIT",
+					[]string{
 						fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.UserTimeout)),
 					},
-				}
+					nil,
+				)
 
 				_ = timeoutMsg
 
 				continue
 			}
 
-			u.SendMessage(&message.Message{
-				Prefix:  s.Config.ServerName,
-				Command: "PING",
-				Params: []string{
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				"PING",
+				[]string{
 					fmt.Sprintf("%d", ts),
 				},
-			})
+				nil,
+			))
 		}
 
 		log.Printf("[SERVER] Done to scan the status of all users for this time")
@@ -73,7 +75,7 @@ func doUserChecking() {
 
 func doRequest(u *user.User) {
 	for buf := range u.In {
-		m, err := message.NewFromRaw(string(buf))
+		m, err := message.Parse(string(buf))
 		if err != nil {
 			log.Printf("[Client:%s] Malformed message %s", u.Conn.RemoteAddr(), err)
 			continue
@@ -84,7 +86,41 @@ func doRequest(u *user.User) {
 		cmd, ok := commands[m.Command]
 		if !ok {
 			log.Printf("[Client:%s] Unknown command %s", u.Conn.RemoteAddr(), m.Command)
+			if u.IsRegistered() {
+				u.SendMessage(message.New(
+					u.Config.ServerName,
+					message.ERR_UNKNOWNCOMMAND,
+					[]string{u.NickName, m.Command},
+					"Unknown command",
+				))
+			}
+
 			continue
+		}
+
+		if !u.IsRegistered() {
+			// We only allow limited commands before user registered successfully
+			if m.Command != "PASS" && m.Command != "USER" && m.Command != "NICK" {
+				u.SendMessage(message.New(
+					u.Config.ServerName,
+					message.ERR_NOTREGISTERED,
+					[]string{"*"},
+					"You have not registered",
+				))
+
+				continue
+			}
+		} else {
+			if m.Command == "PASS" || m.Command == "USER" || m.Command == "SERVICE" {
+				u.SendMessage(message.New(
+					u.Config.ServerName,
+					message.ERR_ALREADYREGISTRED,
+					[]string{u.NickName},
+					"Already registered",
+				))
+
+				continue
+			}
 		}
 
 		err = cmd.(command.Command).Handle(s, u, m)
@@ -148,6 +184,8 @@ func init() {
 	registerCmd("PRIVMSG", &module.Privmsg{})
 	registerCmd("ISON", &module.Ison{})
 	registerCmd("TOPIC", &module.Topic{})
+	registerCmd("MOTD", &module.Motd{})
+	registerCmd("VERSION", &module.Version{})
 	//registerCmd("NAMES", &module.Names{})
 }
 

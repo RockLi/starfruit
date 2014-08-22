@@ -28,33 +28,18 @@ func (module *Pass) Handle(s *server.Server, u *user.User, m *message.Message) e
 		return nil
 	}
 
-	log.Printf("[COMMAND] PASS :%s|%s", u.Config.Password, pwd)
-
-	if u.Status != "WaitingPassword" && u.PasswordVerified() {
-
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_ALREADYREGISTRED,
-			Params:   nil,
-			Trailing: "Password already verified",
-		})
-
-		return nil
-	}
-
 	if pwd != s.Config.Password {
-
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_PASSWDMISMATCH,
-			Params:   nil,
-			Trailing: "Password incorrect",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_PASSWDMISMATCH,
+			[]string{"*"},
+			"Password incorrect",
+		))
 
 		return nil
 	}
 
-	u.Status = "PasswordVerified"
+	u.EnterStatus(user.PasswordVerified)
 
 	return nil
 }

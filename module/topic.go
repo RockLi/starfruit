@@ -7,6 +7,7 @@
 package module
 
 import (
+	"fmt"
 	"github.com/flatpeach/ircd/message"
 	"github.com/flatpeach/ircd/server"
 	"github.com/flatpeach/ircd/user"
@@ -27,63 +28,77 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 
 	cnl := s.FindChannelByName(channelName)
 	if cnl == nil {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NOSUCHCHANNEL,
-			Params:   []string{u.NickName, channelName},
-			Trailing: "No such channel",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NOSUCHCHANNEL,
+			[]string{u.NickName, channelName},
+			"No such channel",
+		))
+
 		return nil
 	}
 
 	if !s.IsUserJoinedChannel(u.Id, cnl.Id) {
-		u.SendMessage(&message.Message{
-			Prefix:   s.Config.ServerName,
-			Command:  message.ERR_NOTONCHANNEL,
-			Params:   []string{u.NickName, channelName},
-			Trailing: "You're not on that channel",
-		})
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.ERR_NOTONCHANNEL,
+			[]string{u.NickName, channelName},
+			"You're not on that channel",
+		))
+
 		return nil
 	}
 
 	if len(m.Params) > 1 {
 		var newTopic = m.Params[1]
-		cnl.SetTopic(newTopic)
+		cnl.SetTopic(newTopic, u.Full())
 
-		s.BroadcastMessage(cnl.Id, &message.Message{
-			Prefix:  u.Full(),
-			Command: "TOPIC",
-			Params: []string{
+		s.BroadcastMessage(cnl.Id, message.New(
+			u.Full(),
+			"TOPIC",
+			[]string{
 				channelName,
 			},
-			Trailing: newTopic,
-		}, nil)
+			newTopic,
+		), nil)
 
 		return nil
 	}
 
 	if cnl.Topic() == "" {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_NOTOPIC,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_NOTOPIC,
+			[]string{
 				u.NickName,
 				channelName,
 			},
-			Trailing: "No topic is set.",
-		})
+			"No topic is set.",
+		))
 
 		return nil
 	} else {
-		u.SendMessage(&message.Message{
-			Prefix:  s.Config.ServerName,
-			Command: message.RPL_TOPIC,
-			Params: []string{
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_TOPIC,
+			[]string{
 				u.NickName,
 				channelName,
 			},
-			Trailing: cnl.Topic(),
-		})
+			cnl.Topic(),
+		))
+
+		u.SendMessage(message.New(
+			s.Config.ServerName,
+			message.RPL_TOPICWHOTIME,
+			[]string{
+				u.NickName,
+				channelName,
+				cnl.TopicSetBy(),
+				fmt.Sprintf("%d", cnl.TopicSetTime()),
+			},
+			nil,
+		))
 
 		// Sendout message RPL_TOPICWHOTIME
 

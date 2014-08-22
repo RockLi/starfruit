@@ -13,7 +13,7 @@ import (
 func TestMessage1(t *testing.T) {
 	line := "USER rocklee 8 * :RockLee"
 
-	m, err := New(line)
+	m, err := Parse(line)
 
 	if err != nil {
 		t.Error("Should no error happened")
@@ -47,7 +47,7 @@ func TestMessage1(t *testing.T) {
 func TestMessage2(t *testing.T) {
 	line := ":Rock!rock@localhost PRIVMSG #abord :你好,世界!"
 
-	m, err := New(line)
+	m, err := Parse(line)
 	if err != nil {
 		t.Error("error happened")
 	}
@@ -73,7 +73,7 @@ func TestMessage2(t *testing.T) {
 func TestMessageEmptyTrailing(t *testing.T) {
 	line := ":prefix command param1 param2 :"
 
-	m, err := New(line)
+	m, err := Parse(line)
 
 	if err != nil {
 		t.Error("error happened")
@@ -91,7 +91,7 @@ func TestMessageEmptyTrailing(t *testing.T) {
 func TestMessage3(t *testing.T) {
 	line := ":prefix command param1 param2"
 
-	m, err := New(line)
+	m, err := Parse(line)
 
 	if err != nil {
 		t.Error("error happened")

@@ -14,6 +14,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 const (
@@ -21,6 +22,7 @@ const (
 	PasswordVerified
 	NotRegistered
 	Registered
+	Disconnecting
 )
 
 type User struct {
@@ -30,7 +32,8 @@ type User struct {
 
 	LastPongTime int64 // Last time this user reply a PONG message
 
-	In chan []byte
+	In  chan []byte
+	Out chan []byte
 
 	Id       int
 	UserName string
@@ -43,10 +46,11 @@ type User struct {
 
 func New(cf *config.Config, conn net.Conn) *User {
 	u := &User{
-		Config: cf,
-		Conn:   conn,
-		// stateMachine: fsm.New(), // Manipulating User State
-		LastPongTime: 0,
+		Config:       cf,
+		Conn:         conn,
+		status:       PasswordNotVerified,
+		LastPongTime: time.Now().Unix(),
+		Id:           0,
 	}
 
 	if cf.Password == "" {
@@ -56,6 +60,7 @@ func New(cf *config.Config, conn net.Conn) *User {
 	}
 
 	u.In = make(chan []byte)
+	u.Out = make(chan []byte)
 
 	return u
 }
@@ -68,11 +73,22 @@ func (u *User) IsRegistered() bool {
 	return false
 }
 
+func (u *User) IsDisconnecting() bool {
+	if u.status == Disconnecting {
+		return true
+	}
+
+	return false
+}
+
 func (u *User) Full() string {
 	return u.NickName + "!~" + u.UserName + "@" + u.HostName
 }
 
 func (u *User) Close() {
+	if u.status == Disconnecting {
+		return
+	}
 	if u.Conn == nil {
 		log.Printf("[SERVER] Try to close nil connection")
 		return
@@ -82,6 +98,9 @@ func (u *User) Close() {
 	if err != nil {
 		log.Printf("[SERVER] Failed to close user's connection: %s", err)
 	}
+
+	// close(u.In)
+	// close(u.Out)
 }
 
 func (u *User) IsPasswordVerified() bool {
@@ -94,12 +113,7 @@ func (u *User) IsPasswordVerified() bool {
 
 func (u *User) SendMessage(m *message.Message) {
 	data := m.String() + "\r\n"
-	log.Printf("[Client:%s] Reply %s", u.Conn.RemoteAddr(), m.String())
-	_, err := u.Conn.Write([]byte(data))
-	if err != nil {
-		log.Printf("[Client:%s] Failed to send reply message")
-		u.Close()
-	}
+	u.Out <- []byte(data)
 }
 
 func (u *User) SendErrorNeedMoreParams(c string) {
@@ -164,7 +178,6 @@ func (u *User) SendMotd() {
 			[]string{u.NickName},
 			fmt.Sprintf("- %s -", buf),
 		))
-
 	}
 
 	u.SendMessage(message.New(

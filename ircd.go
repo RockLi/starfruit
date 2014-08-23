@@ -12,7 +12,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	_ "github.com/flatpeach/ircd/channel"
 	"github.com/flatpeach/ircd/command"
 	"github.com/flatpeach/ircd/config"
 	"github.com/flatpeach/ircd/message"
@@ -21,7 +20,6 @@ import (
 	"github.com/flatpeach/ircd/user"
 	"log"
 	"net"
-	_ "os/signal"
 	"time"
 )
 
@@ -34,26 +32,37 @@ var (
 func doUserChecking() {
 	for {
 		time.Sleep(time.Duration(s.Config.PingUserInterval) * time.Second)
-
 		ts := time.Now().Unix()
-
 		log.Printf("[SERVER] Ready to scan the status of all users: %d", ts)
 
 		users := s.GetAllUsers()
+		fmt.Printf("users: %v\n", users)
 		for _, u := range users {
+			if u.IsDisconnecting() {
+				continue
+			}
 
 			if u.LastPongTime != 0 && ts-u.LastPongTime > int64(s.Config.UserTimeout) {
-				// @Todo: Remove this use from server and sendout TimeOut message to users
 				timeoutMsg := message.New(
 					u.Full(),
 					"QUIT",
-					[]string{
-						fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.UserTimeout)),
-					},
 					nil,
+					fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.UserTimeout)),
 				)
 
-				_ = timeoutMsg
+				s.RemoveUser(u.Id)
+
+				channels := s.GetJoinedChannels(u.Id)
+				for _, cnl := range channels {
+					s.BroadcastMessage(cnl.Id, timeoutMsg, nil)
+				}
+
+				u.SendMessage(message.New(
+					nil,
+					"ERROR",
+					nil,
+					fmt.Sprintf("Closing Link: %s (Ping timeout: %d seconds)", u.HostName, s.Config.UserTimeout),
+				))
 
 				continue
 			}
@@ -70,6 +79,17 @@ func doUserChecking() {
 
 		log.Printf("[SERVER] Done to scan the status of all users for this time")
 
+	}
+}
+
+func doResponse(u *user.User) {
+	for buf := range u.Out {
+		log.Printf("[Client:%s] Reply %s", u.Conn.RemoteAddr(), string(buf))
+		_, err := u.Conn.Write(buf)
+		if err != nil {
+			log.Printf("[Client:%s] Failed to send reply message")
+			u.Close()
+		}
 	}
 }
 
@@ -136,18 +156,20 @@ func doConn(u *user.User) {
 	reader := bufio.NewReader(u.Conn)
 
 	go doRequest(u)
+	go doResponse(u)
 
 	for {
 		buf, _, err := reader.ReadLine()
 		if err != nil {
 			log.Printf("[Client:%s] Remote connection already closed!", u.Conn.RemoteAddr())
 			s.RemoveUser(u.Id)
-			close(u.In)
+			u.Close()
 			break
 		}
 
-		u.In <- buf
-
+		if len(buf) > 0 {
+			u.In <- buf
+		}
 	}
 }
 
@@ -165,6 +187,7 @@ func init() {
 	flag.StringVar(&configFile, "config", "./ircd.conf", "config file of this irc server")
 
 	s = server.New()
+	s.StartedAt = time.Now()
 	s.Config = config.New()
 
 	commands = make(map[string]interface{})
@@ -186,14 +209,12 @@ func init() {
 	registerCmd("TOPIC", &module.Topic{})
 	registerCmd("MOTD", &module.Motd{})
 	registerCmd("VERSION", &module.Version{})
-	//registerCmd("NAMES", &module.Names{})
+	registerCmd("INFO", &module.Info{})
+
 }
 
 func main() {
 	flag.Parse()
-
-	fmt.Println(configFile)
-
 	err := s.Config.LoadFromJSONFile(configFile)
 	if err != nil {
 		log.Fatalf("[SERVER] Failed to load the configuration file :%s", err)

@@ -13,10 +13,12 @@ import (
 	"github.com/flatpeach/ircd/message"
 	"github.com/flatpeach/ircd/user"
 	"sync"
+	"time"
 )
 
 type Server struct {
-	Config *config.Config // Config for current IRC Server
+	Config    *config.Config // Config for current IRC Server
+	StartedAt time.Time
 
 	channels map[int]*channel.Channel // All channels in this server
 	users    map[int]*user.User       // All users existed in this server
@@ -192,6 +194,13 @@ func (s *Server) RegisterUser(u *user.User) (bool, error) {
 	s.users[u.Id] = u
 	s.nicknames[u.NickName] = u
 	return true, nil
+}
+
+func (s *Server) RegisterNickName(u *user.User) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.nicknames[u.NickName] = u
 }
 
 func (s *Server) GetUserByNickName(name string) *user.User {

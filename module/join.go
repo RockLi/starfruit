@@ -44,6 +44,10 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 			return nil
 		}
 
+		if s.IsUserJoinedChannel(u.Id, cnl.Id) {
+			continue
+		}
+
 		joinMsg := message.New(
 			u.Full(),
 			"JOIN",

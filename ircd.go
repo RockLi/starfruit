@@ -211,6 +211,7 @@ func init() {
 	registerCmd("VERSION", &module.Version{})
 	registerCmd("INFO", &module.Info{})
 	registerCmd("TIME", &module.Time{})
+	registerCmd("INVITE", &module.Invite{})
 }
 
 func main() {

@@ -112,6 +112,14 @@ func (u *User) IsPasswordVerified() bool {
 	return false
 }
 
+func (u *User) IsAway() bool {
+	if u.Away != "" {
+		return true
+	}
+
+	return false
+}
+
 func (u *User) SendMessage(m *message.Message) {
 	data := m.String() + "\r\n"
 	u.Out <- []byte(data)

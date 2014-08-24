@@ -10,12 +10,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	_ "strconv"
+	"time"
 )
 
 type Config struct {
-	ServerName string
-	Password   string
-	SSL        bool
+	ServerName      string
+	ServerCreatedAt time.Time
+	Password        string
+	SSL             bool
 
 	BindIP   string
 	BindPort int
@@ -29,6 +31,7 @@ type Config struct {
 func New() *Config {
 	cf := &Config{
 		ServerName:       "localhost",
+		ServerCreatedAt:  time.Date(2014, 01, 01, 12, 0, 0, 0, time.UTC),
 		SSL:              false,
 		BindIP:           "127.0.0.1",
 		BindPort:         6667,

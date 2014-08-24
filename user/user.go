@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/flatpeach/ircd/config"
 	"github.com/flatpeach/ircd/message"
+	"github.com/flatpeach/ircd/version"
 	"log"
 	"net"
 	"os"
@@ -198,31 +199,35 @@ func (u *User) SendWelcomeMessage() {
 
 	u.SendMessage(message.New(
 		u.Config.ServerName,
-		"002",
+		message.RPL_YOURHOST,
 		[]string{u.NickName},
-		"xxx",
+		fmt.Sprintf("Your host is %s, running version %s",
+			u.Config.ServerName,
+			version.Version(),
+		),
 	))
 
 	u.SendMessage(message.New(
 		u.Config.ServerName,
-		"003",
+		message.RPL_CREATED,
 		[]string{u.NickName},
-		"xxx",
+		fmt.Sprintf("This server was created %s",
+			u.Config.ServerCreatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
 	))
 
 	u.SendMessage(message.New(
 		u.Config.ServerName,
-		"004",
+		message.RPL_MYINFO,
 		[]string{u.NickName},
-		"xxx",
+		fmt.Sprintf("%s %s", u.Config.ServerName, version.Version()),
 	))
 
-	u.SendMessage(message.New(
-		u.Config.ServerName,
-		"005",
-		[]string{u.NickName},
-		"xxx",
-	))
+	// u.SendMessage(message.New(
+	// 	u.Config.ServerName,
+	// 	message.RPL_BOUNCE,
+	// 	[]string{u.NickName},
+	// 	nil,
+	// ))
 
 	u.SendMotd()
 

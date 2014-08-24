@@ -30,10 +30,24 @@ func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) e
 	u.NickName = m.Params[0]
 
 	if u.UserName != "" {
-		u.Id = s.NewUserId()
-		s.RegisterUser(u)
-		u.EnterStatus(user.Registered)
-		u.SendWelcomeMessage()
+		if s.IsNickNameRegistered(u.NickName) {
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				message.ERR_NICKNAMEINUSE,
+				[]string{
+					"*",
+					u.NickName,
+				},
+				"Nickname is already in use",
+			))
+
+			return nil
+		} else {
+			u.Id = s.NewUserId()
+			s.RegisterUser(u)
+			u.EnterStatus(user.Registered)
+			u.SendWelcomeMessage()
+		}
 	}
 
 	return nil

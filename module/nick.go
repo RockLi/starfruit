@@ -27,7 +27,44 @@ func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) e
 		return nil
 	}
 
-	u.NickName = m.Params[0]
+	nickName := m.Params[0]
+
+	if u.IsRegistered() {
+		if s.IsNickNameRegistered(nickName) {
+			u.SendMessage(message.New(
+				s.Config.ServerName,
+				message.ERR_NICKNAMEINUSE,
+				[]string{
+					"*",
+					u.NickName,
+				},
+				"Nickname is already in use",
+			))
+		}
+
+		nickChangedMsg := message.New(
+			u.Full(),
+			"NICK",
+			nil,
+			nickName,
+		)
+
+		oldNickName := u.NickName
+		u.NickName = nickName
+
+		s.RegisterNickName(u.NickName, u)
+		s.UnregisterNickName(oldNickName)
+
+		u.SendMessage(nickChangedMsg)
+
+		for _, c := range s.GetJoinedChannels(u.Id) {
+			s.BroadcastMessage(c.Id, nickChangedMsg, []int{u.Id})
+		}
+
+		return nil
+	}
+
+	u.NickName = nickName
 
 	if u.UserName != "" {
 		if s.IsNickNameRegistered(u.NickName) {

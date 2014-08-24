@@ -196,11 +196,18 @@ func (s *Server) RegisterUser(u *user.User) (bool, error) {
 	return true, nil
 }
 
-func (s *Server) RegisterNickName(u *user.User) {
+func (s *Server) RegisterNickName(nick string, u *user.User) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.nicknames[u.NickName] = u
+}
+
+func (s *Server) UnregisterNickName(nick string) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	delete(s.nicknames, nick)
 }
 
 func (s *Server) GetUserByNickName(name string) *user.User {

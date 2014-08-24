@@ -198,6 +198,7 @@ func init() {
 	registerCmd("ISON", &module.Ison{})
 	registerCmd("JOIN", &module.Join{})
 	registerCmd("LIST", &module.List{})
+	registerCmd("MODE", &module.Mode{})
 	registerCmd("MOTD", &module.Motd{})
 	registerCmd("NICK", &module.Nick{})
 	registerCmd("PART", &module.Part{})
@@ -212,7 +213,6 @@ func init() {
 	registerCmd("VERSION", &module.Version{})
 	registerCmd("WHO", &module.Who{})
 	registerCmd("WHOIS", &module.Whois{})
-
 }
 
 func main() {

@@ -120,7 +120,50 @@ func (u *User) MarkMode(m int) {
 	defer u.mutex.Unlock()
 
 	u.modes |= m
+}
 
+func (u *User) ClearMode(m int) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	u.modes &= ^m
+}
+
+func (u *User) Modes() string {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	s := "+"
+
+	if u.modes&ModeAway > 0 {
+		s += "a"
+	}
+
+	if u.modes&ModeInvisible > 0 {
+		s += "i"
+	}
+
+	if u.modes&ModeReceiveWallops > 0 {
+		s += "w"
+	}
+
+	if u.modes&ModeRestrictedUserConnection > 0 {
+		s += "r"
+	}
+
+	if u.modes&ModeOperator > 0 {
+		s += "o"
+	}
+
+	if u.modes&ModeLocalOperator > 0 {
+		s += "O"
+	}
+
+	if u.modes&ModeReceiveServiceNotice > 0 {
+		s += "s"
+	}
+
+	return s
 }
 
 func (u *User) IsRegistered() bool {

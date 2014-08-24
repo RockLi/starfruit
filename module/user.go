@@ -31,12 +31,20 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	if u.UserName == "" {
 		u.UserName = m.Params[0]
-		if m.Params[1] == "*" {
-			u.Mode = 0
-		} else {
-			mode, _ := strconv.Atoi(m.Params[1])
-			u.Mode = int32(mode)
+		mode := m.Params[1]
+		if mode != "*" {
+			mode, err := strconv.Atoi(mode)
+			if err == nil {
+				if mode&2 > 0 {
+					u.MarkMode(user.ModeReceiveWallops)
+				}
+
+				if mode&4 > 0 {
+					u.MarkMode(user.ModeInvisible)
+				}
+			}
 		}
+
 		u.HostName = m.Params[2] // @Todo: fix the hostname here
 		u.RealName = m.Params[3]
 	}

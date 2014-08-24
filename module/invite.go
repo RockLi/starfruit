@@ -98,7 +98,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 				u.NickName,
 				invitedUser.NickName,
 			},
-			invitedUser.Away,
+			invitedUser.AwayMsg(),
 		))
 	}
 

@@ -24,20 +24,22 @@ func (module *Away) Handle(s *server.Server, u *user.User, m *message.Message) e
 		awayMsg = m.Params[0]
 	}
 
-	u.Away = awayMsg
+	u.SetAwayMsg(awayMsg)
 
-	if u.Away == "" {
+	if u.AwayMsg() == "" {
 		u.SendMessage(message.New(s.Config.ServerName,
 			message.RPL_UNAWAY,
 			[]string{u.NickName},
 			"You are no longer marked as being away",
 		))
+		u.MarkAway(false)
 	} else {
 		u.SendMessage(message.New(s.Config.ServerName,
 			message.RPL_NOWAWAY,
 			[]string{u.NickName},
 			"You have been marked as being away",
 		))
+		u.MarkAway(true)
 	}
 
 	return nil

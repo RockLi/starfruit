@@ -15,6 +15,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -26,23 +27,35 @@ const (
 	Disconnecting
 )
 
+const (
+	ModeAway                     = 1 << 0
+	ModeInvisible                = 1 << 1
+	ModeReceiveWallops           = 1 << 2
+	ModeRestrictedUserConnection = 1 << 3
+	ModeOperator                 = 1 << 4
+	ModeLocalOperator            = 1 << 5
+	ModeReceiveServiceNotice     = 1 << 6
+)
+
 type User struct {
 	Config *config.Config // Global Server Config
-	Conn   net.Conn       // Original TCP connection
-	status int            // @Todo: Replace this with real FSM
 
-	LastPongTime int64 // Last time this user reply a PONG message
+	Conn net.Conn // Original TCP connection
+
+	Id           int
+	UserName     string
+	NickName     string
+	RealName     string
+	HostName     string // Hostname this user try to connect
+	LastPongTime int64  // Last time this user reply a PONG message
 
 	In  chan []byte
 	Out chan []byte
 
-	Id       int
-	UserName string
-	NickName string
-	RealName string
-	Mode     int32
-	HostName string // Hostname this user try to connect
-	Away     string // Away message for this user
+	awayMsg string // Away message for this user
+	status  int    // @Todo: Replace this with real FSM
+	modes   int
+	mutex   sync.Mutex
 }
 
 func New(cf *config.Config, conn net.Conn) *User {
@@ -66,7 +79,54 @@ func New(cf *config.Config, conn net.Conn) *User {
 	return u
 }
 
+func (u *User) AwayMsg() string {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	return u.awayMsg
+}
+
+func (u *User) SetAwayMsg(s string) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	u.awayMsg = s
+}
+
+func (u *User) MarkAway(b bool) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	if b {
+		u.modes |= ModeAway
+	} else {
+		u.modes = u.modes & ^ModeAway
+	}
+}
+
+func (u *User) IsAway() bool {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	if u.modes&ModeAway > 0 {
+		return true
+	}
+
+	return false
+}
+
+func (u *User) MarkMode(m int) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	u.modes |= m
+
+}
+
 func (u *User) IsRegistered() bool {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	if u.status == Registered {
 		return true
 	}
@@ -75,6 +135,9 @@ func (u *User) IsRegistered() bool {
 }
 
 func (u *User) IsDisconnecting() bool {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	if u.status == Disconnecting {
 		return true
 	}
@@ -83,10 +146,16 @@ func (u *User) IsDisconnecting() bool {
 }
 
 func (u *User) Full() string {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	return u.NickName + "!~" + u.UserName + "@" + u.HostName
 }
 
 func (u *User) Close() {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	if u.status == Disconnecting {
 		return
 	}
@@ -105,15 +174,10 @@ func (u *User) Close() {
 }
 
 func (u *User) IsPasswordVerified() bool {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	if u.status >= PasswordVerified {
-		return true
-	}
-
-	return false
-}
-
-func (u *User) IsAway() bool {
-	if u.Away != "" {
 		return true
 	}
 
@@ -144,15 +208,20 @@ func (u *User) SendErrorNeedMoreParams(c string) {
 }
 
 func (u *User) EnterStatus(s int) {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	u.status = s
 }
 
 func (u *User) Status() int {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
 	return u.status
 }
 
 func (u *User) SendMotd() {
-
 	file, err := os.Open(u.Config.MotdFile)
 	if err != nil {
 		u.SendMessage(message.New(
@@ -164,6 +233,7 @@ func (u *User) SendMotd() {
 
 		return
 	}
+
 	defer file.Close()
 
 	reader := bufio.NewReader(file)

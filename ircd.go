@@ -210,7 +210,7 @@ func init() {
 	registerCmd("MOTD", &module.Motd{})
 	registerCmd("VERSION", &module.Version{})
 	registerCmd("INFO", &module.Info{})
-
+	registerCmd("TIME", &module.Time{})
 }
 
 func main() {

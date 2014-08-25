@@ -6,7 +6,7 @@ A modern implementation of IRC server written in Golang.
 Released by [starfruit.io](http://starfruit.io).
 
 
-[![Build Status](https://raw.githubusercontent.com/flatpeach/starfruit/master/starfruit.jpg)]
+![Build Status](https://raw.githubusercontent.com/flatpeach/starfruit/master/starfruit.jpg)
 
 
 Background

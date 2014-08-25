@@ -3,7 +3,11 @@ Starfruit [![Build Status](https://travis-ci.org/flatpeach/starfruit.svg?branch=
 
 A modern implementation of IRC server written in Golang.
 
-Released by [starfruit.io](http://starfruit.io)
+Released by [starfruit.io](http://starfruit.io).
+
+
+[![Build Status](https://raw.githubusercontent.com/flatpeach/starfruit/master/starfruit.jpg)]
+
 
 Background
 ====

@@ -22,9 +22,9 @@ Quick Start
 
 I assume you already familiar with how to install go related packages.
 
-1. Install the code ```go get github.com/flatpeach/ircd```
+1. Install the code ```go get github.com/flatpeach/starfruit```
 2. Prepare your ```ircd.conf```, you can consult the default ```ircd.conf``` in this repo
-3. Start your irc server ```ircd --config my_config_file_path```
+3. Start your irc server ```starfruit --config my_config_file_path```
 
 Enjoy to chat with this IRC server.
 

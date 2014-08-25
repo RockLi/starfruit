@@ -7,17 +7,17 @@
 package module
 
 import (
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
 	"strconv"
+	"strings"
 )
 
 type User struct{}
 
 func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// USER <user> <mode> <unused> <realname>
-
 	if !(len(m.Params) == 4) {
 		u.SendMessage(message.New(
 			s.Config.ServerName,
@@ -45,7 +45,7 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 			}
 		}
 
-		u.HostName = m.Params[2] // @Todo: fix the hostname here
+		u.HostName = strings.Split(u.Conn.LocalAddr().String(), ":")[0]
 		u.RealName = m.Params[3]
 	}
 
@@ -53,7 +53,7 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 		// Everything is ok, register this user to the server user list
 		u.Id = s.NewUserId()
 		s.RegisterUser(u)
-		u.EnterStatus(user.Registered)
+		u.EnterStatus(user.StatusRegistered)
 		u.SendWelcomeMessage()
 	}
 

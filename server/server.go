@@ -8,10 +8,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/flatpeach/ircd/channel"
-	"github.com/flatpeach/ircd/config"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/channel"
+	"github.com/flatpeach/starfruit/config"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/user"
 	"sync"
 	"time"
 )

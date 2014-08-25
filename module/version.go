@@ -8,10 +8,10 @@ package module
 
 import (
 	"fmt"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
-	"github.com/flatpeach/ircd/version"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
+	"github.com/flatpeach/starfruit/version"
 )
 
 type Version struct{}

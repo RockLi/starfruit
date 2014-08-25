@@ -7,9 +7,9 @@
 package command
 
 import (
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
 )
 
 type Command interface {

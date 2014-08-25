@@ -9,9 +9,9 @@ package user
 import (
 	"bufio"
 	"fmt"
-	"github.com/flatpeach/ircd/config"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/version"
+	"github.com/flatpeach/starfruit/config"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/version"
 	"log"
 	"net"
 	"os"
@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	PasswordNotVerified = iota
-	PasswordVerified
-	NotRegistered
-	Registered
-	Disconnecting
+	StatusPasswordNotVerified = iota
+	StatusPasswordVerified
+	StatusNotRegistered
+	StatusRegistered
+	StatusDisconnecting
 )
 
 const (
@@ -62,15 +62,15 @@ func New(cf *config.Config, conn net.Conn) *User {
 	u := &User{
 		Config:       cf,
 		Conn:         conn,
-		status:       PasswordNotVerified,
+		status:       StatusPasswordNotVerified,
 		LastPongTime: time.Now().Unix(),
 		Id:           0,
 	}
 
 	if cf.Password == "" {
-		u.EnterStatus(PasswordVerified)
+		u.EnterStatus(StatusPasswordVerified)
 	} else {
-		u.EnterStatus(PasswordNotVerified)
+		u.EnterStatus(StatusPasswordNotVerified)
 	}
 
 	u.In = make(chan []byte)
@@ -170,7 +170,7 @@ func (u *User) IsRegistered() bool {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	if u.status == Registered {
+	if u.status == StatusRegistered {
 		return true
 	}
 
@@ -181,7 +181,7 @@ func (u *User) IsDisconnecting() bool {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	if u.status == Disconnecting {
+	if u.status == StatusDisconnecting {
 		return true
 	}
 
@@ -199,9 +199,12 @@ func (u *User) Close() {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	if u.status == Disconnecting {
+	if u.status == StatusDisconnecting {
 		return
 	}
+
+	u.status = StatusDisconnecting
+
 	if u.Conn == nil {
 		log.Printf("[SERVER] Try to close nil connection")
 		return
@@ -212,15 +215,15 @@ func (u *User) Close() {
 		log.Printf("[SERVER] Failed to close user's connection: %s", err)
 	}
 
-	// close(u.In)
-	// close(u.Out)
+	close(u.In)
+	close(u.Out)
 }
 
 func (u *User) IsPasswordVerified() bool {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	if u.status >= PasswordVerified {
+	if u.status >= StatusPasswordVerified {
 		return true
 	}
 
@@ -228,8 +231,15 @@ func (u *User) IsPasswordVerified() bool {
 }
 
 func (u *User) SendMessage(m *message.Message) {
-	data := m.String() + "\r\n"
-	u.Out <- []byte(data)
+	if u.IsDisconnecting() {
+		return
+	}
+	if m != nil {
+		data := m.String() + "\r\n"
+		u.Out <- []byte(data)
+	} else {
+		u.Out <- nil
+	}
 }
 
 func (u *User) SendErrorNeedMoreParams(c string) {

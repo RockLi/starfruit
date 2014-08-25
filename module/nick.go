@@ -7,9 +7,9 @@
 package module
 
 import (
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
 )
 
 type Nick struct{}
@@ -82,7 +82,7 @@ func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) e
 		} else {
 			u.Id = s.NewUserId()
 			s.RegisterUser(u)
-			u.EnterStatus(user.Registered)
+			u.EnterStatus(user.StatusRegistered)
 			u.SendWelcomeMessage()
 		}
 	}

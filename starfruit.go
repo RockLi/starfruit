@@ -12,12 +12,12 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/flatpeach/ircd/command"
-	"github.com/flatpeach/ircd/config"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/module"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/command"
+	"github.com/flatpeach/starfruit/config"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/module"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
 	"log"
 	"net"
 	"time"
@@ -64,6 +64,9 @@ func doUserChecking() {
 					fmt.Sprintf("Closing Link: %s (Ping timeout: %d seconds)", u.HostName, s.Config.UserTimeout),
 				))
 
+				u.SendMessage(nil)
+				u.EnterStatus(user.StatusDisconnecting)
+
 				continue
 			}
 
@@ -84,17 +87,26 @@ func doUserChecking() {
 
 func doResponse(u *user.User) {
 	for buf := range u.Out {
+		if buf == nil {
+			u.Close()
+			return
+		}
 		log.Printf("[Client:%s] Reply %s", u.Conn.RemoteAddr(), string(buf))
 		_, err := u.Conn.Write(buf)
 		if err != nil {
 			log.Printf("[Client:%s] Failed to send reply message")
-			u.Close()
+			u.SendMessage(nil)
 		}
 	}
 }
 
 func doRequest(u *user.User) {
 	for buf := range u.In {
+
+		if buf == nil && u.IsDisconnecting() {
+			return
+		}
+
 		m, err := message.Parse(string(buf))
 		if err != nil {
 			log.Printf("[Client:%s] Malformed message %s", u.Conn.RemoteAddr(), err)
@@ -163,7 +175,8 @@ func doConn(u *user.User) {
 		if err != nil {
 			log.Printf("[Client:%s] Remote connection already closed!", u.Conn.RemoteAddr())
 			s.RemoveUser(u.Id)
-			u.Close()
+			u.SendMessage(nil)
+			u.EnterStatus(user.StatusDisconnecting)
 			break
 		}
 
@@ -241,7 +254,7 @@ func main() {
 
 		listener, err = tls.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort), &config)
 		if err != nil {
-			log.Fatal("[SERVER] Failed to start the SERVER(SSL)")
+			log.Fatal("[SERVER] Failed to start the SERVER(SSL), %s", err)
 			return
 		}
 
@@ -249,7 +262,7 @@ func main() {
 
 		listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort))
 		if err != nil {
-			log.Fatal("[SERVER] Failed to start the SERVER")
+			log.Fatal("[SERVER] Failed to start the SERVER, %s", err)
 		}
 
 	}

@@ -8,10 +8,10 @@ package module
 
 import (
 	"fmt"
-	"github.com/flatpeach/ircd/channel"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/server"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/channel"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/server"
+	"github.com/flatpeach/starfruit/user"
 	"strings"
 )
 

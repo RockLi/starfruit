@@ -9,8 +9,8 @@ package channel
 import (
 	"errors"
 	"fmt"
-	"github.com/flatpeach/ircd/message"
-	"github.com/flatpeach/ircd/user"
+	"github.com/flatpeach/starfruit/message"
+	"github.com/flatpeach/starfruit/user"
 	"sync"
 	"time"
 )

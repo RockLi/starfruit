@@ -1,8 +1,9 @@
-ircd [![Build Status](https://travis-ci.org/flatpeach/ircd.svg?branch=master)](https://travis-ci.org/flatpeach/ircd)
+Starfruit [![Build Status](https://travis-ci.org/flatpeach/starfruit.svg?branch=master)](https://travis-ci.org/flatpeach/starfuit)
 ====
 
-Internet relay chat server which written in Golang.
+A modern implementation of IRC server written in Golang.
 
+Released by [starfruit.io](http://starfruit.io)
 
 Background
 ====

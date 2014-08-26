@@ -16,6 +16,11 @@ type Nick struct{}
 
 func (module *Nick) Handle(s *server.Server, u *user.User, m *message.Message) error {
 	// NICK <nickname>
+
+	if !u.IsPasswordVerified() {
+		return nil
+	}
+
 	if len(m.Params) != 1 {
 		u.SendMessage(message.New(
 			s.Config.ServerName,

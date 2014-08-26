@@ -26,6 +26,8 @@ type Config struct {
 	UserTimeout      int
 
 	MotdFile string
+
+	DisabledCommands []string
 }
 
 func New() *Config {
@@ -38,6 +40,7 @@ func New() *Config {
 		PingUserInterval: 120,
 		UserTimeout:      300,
 		MotdFile:         "",
+		DisabledCommands: nil,
 	}
 
 	return cf
@@ -86,6 +89,13 @@ func (c *Config) LoadFromJSONFile(name string) error {
 
 	if motd, exists := configs["motd_file"]; exists {
 		c.MotdFile = motd.(string)
+	}
+
+	if disabledCommands, exists := configs["disabled_commands"]; exists {
+		disabledCommands := disabledCommands.([]interface{})
+		for _, cmd := range disabledCommands {
+			c.DisabledCommands = append(c.DisabledCommands, cmd.(string))
+		}
 	}
 
 	return nil

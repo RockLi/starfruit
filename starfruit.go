@@ -154,6 +154,27 @@ func doRequest(u *user.User) {
 			}
 		}
 
+		if s.Config.DisabledCommands != nil {
+			for _, command := range s.Config.DisabledCommands {
+				if command == m.Command {
+					fmt.Printf("Disabled commands: %s", m.Command)
+
+					switch m.Command {
+					case "USERS":
+						u.SendMessage(message.New(
+							u.Config.ServerName,
+							message.ERR_USERSDISABLED,
+							[]string{u.NickName},
+							"USERS has been disabled",
+						))
+
+					}
+
+					continue
+				}
+			}
+		}
+
 		err = cmd.(command.Command).Handle(s, u, m)
 
 		if err != nil {

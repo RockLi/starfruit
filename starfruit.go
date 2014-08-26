@@ -36,7 +36,6 @@ func doUserChecking() {
 		log.Printf("[SERVER] Ready to scan the status of all users: %d", ts)
 
 		users := s.GetAllUsers()
-		fmt.Printf("users: %v\n", users)
 		for _, u := range users {
 			if u.IsDisconnecting() {
 				continue

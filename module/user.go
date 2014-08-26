@@ -50,7 +50,7 @@ func (module *User) Handle(s *server.Server, u *user.User, m *message.Message) e
 			}
 		}
 
-		u.HostName = strings.Split(u.Conn.LocalAddr().String(), ":")[0]
+		u.HostName = strings.Split(u.Conn.RemoteAddr().String(), ":")[0]
 		u.RealName = m.Params[3]
 	}
 

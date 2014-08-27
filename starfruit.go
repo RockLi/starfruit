@@ -273,7 +273,7 @@ func main() {
 
 		listener, err = tls.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort), &config)
 		if err != nil {
-			log.Fatal("[SERVER] Failed to start the SERVER(SSL), %s", err)
+			log.Fatalf("[SERVER] Failed to start the SERVER(SSL), %s", err)
 			return
 		}
 
@@ -281,7 +281,7 @@ func main() {
 
 		listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort))
 		if err != nil {
-			log.Fatal("[SERVER] Failed to start the SERVER, %s", err)
+			log.Fatalf("[SERVER] Failed to start the SERVER, %s", err)
 		}
 
 	}

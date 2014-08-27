@@ -61,10 +61,9 @@ func (m Mode) String() string {
 
 	case ModeReceiveServiceNotice:
 		return "receive service notice"
-
-	default:
-		return "Unknown"
 	}
+
+	return "Unknown"
 }
 
 type User struct {

@@ -101,8 +101,6 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 		))
 
 		// Sendout message RPL_TOPICWHOTIME
-
-		return nil
 	}
 
 	return nil

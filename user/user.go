@@ -27,15 +27,45 @@ const (
 	StatusDisconnecting
 )
 
+type Mode int
+
 const (
-	ModeAway                     = 1 << 0
-	ModeInvisible                = 1 << 1
-	ModeReceiveWallops           = 1 << 2
-	ModeRestrictedUserConnection = 1 << 3
-	ModeOperator                 = 1 << 4
-	ModeLocalOperator            = 1 << 5
-	ModeReceiveServiceNotice     = 1 << 6
+	ModeAway                     Mode = 1 << 0
+	ModeInvisible                Mode = 1 << 1
+	ModeReceiveWallops           Mode = 1 << 2
+	ModeRestrictedUserConnection Mode = 1 << 3
+	ModeOperator                 Mode = 1 << 4
+	ModeLocalOperator            Mode = 1 << 5
+	ModeReceiveServiceNotice     Mode = 1 << 6
 )
+
+func (m Mode) String() string {
+	switch m {
+	case ModeAway:
+		return "away"
+
+	case ModeInvisible:
+		return "invisible"
+
+	case ModeReceiveWallops:
+		return "receive wallops"
+
+	case ModeRestrictedUserConnection:
+		return "restricted user connection"
+
+	case ModeOperator:
+		return "operator"
+
+	case ModeLocalOperator:
+		return "local operator"
+
+	case ModeReceiveServiceNotice:
+		return "receive service notice"
+
+	default:
+		return "Unknown"
+	}
+}
 
 type User struct {
 	Config *config.Config // Global Server Config
@@ -54,7 +84,7 @@ type User struct {
 
 	awayMsg string // Away message for this user
 	status  int    // @Todo: Replace this with real FSM
-	modes   int
+	modes   Mode
 	mutex   sync.Mutex
 }
 
@@ -115,14 +145,14 @@ func (u *User) IsAway() bool {
 	return false
 }
 
-func (u *User) MarkMode(m int) {
+func (u *User) MarkMode(m Mode) {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
 	u.modes |= m
 }
 
-func (u *User) ClearMode(m int) {
+func (u *User) ClearMode(m Mode) {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 

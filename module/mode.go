@@ -71,7 +71,7 @@ func (module *Mode) Handle(s *server.Server, u *user.User, m *message.Message) e
 			}
 		}
 
-		m := 0
+		var m user.Mode
 
 		switch mode {
 		case 'i':

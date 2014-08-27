@@ -157,7 +157,6 @@ func doRequest(u *user.User) {
 		if s.Config.DisabledCommands != nil {
 			for _, command := range s.Config.DisabledCommands {
 				if command == m.Command {
-					fmt.Printf("Disabled commands: %s", m.Command)
 
 					switch m.Command {
 					case "USERS":

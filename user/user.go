@@ -96,7 +96,7 @@ func New(cf *config.Config, conn net.Conn) *User {
 		Id:           0,
 	}
 
-	if cf.Password == "" {
+	if cf.Server.Password == "" {
 		u.EnterStatus(StatusPasswordVerified)
 	} else {
 		u.EnterStatus(StatusPasswordNotVerified)
@@ -273,7 +273,7 @@ func (u *User) SendMessage(m *message.Message) {
 
 func (u *User) SendErrorNeedMoreParams(c string) {
 	m := message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.ERR_NEEDMOREPARAMS,
 		[]string{
 			u.NickName,
@@ -304,10 +304,10 @@ func (u *User) Status() int {
 }
 
 func (u *User) SendMotd() {
-	file, err := os.Open(u.Config.MotdFile)
+	file, err := os.Open(u.Config.Motd.File)
 	if err != nil {
 		u.SendMessage(message.New(
-			u.Config.ServerName,
+			u.Config.Server.Name,
 			message.ERR_NOMOTD,
 			nil,
 			"MOTD File is missing",
@@ -321,10 +321,10 @@ func (u *User) SendMotd() {
 	reader := bufio.NewReader(file)
 
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_MOTDSTART,
 		[]string{u.NickName},
-		fmt.Sprintf("- %s Message of the day -", u.Config.ServerName),
+		fmt.Sprintf("- %s Message of the day -", u.Config.Server.Name),
 	))
 
 	for {
@@ -334,7 +334,7 @@ func (u *User) SendMotd() {
 		}
 
 		u.SendMessage(message.New(
-			u.Config.ServerName,
+			u.Config.Server.Name,
 			message.RPL_MOTD,
 			[]string{u.NickName},
 			fmt.Sprintf("- %s -", buf),
@@ -342,7 +342,7 @@ func (u *User) SendMotd() {
 	}
 
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_ENDOFMOTD,
 		[]string{u.NickName},
 		"End of /MOTD command.",
@@ -351,35 +351,36 @@ func (u *User) SendMotd() {
 
 func (u *User) SendWelcomeMessage() {
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_WELCOME,
 		[]string{u.NickName},
-		fmt.Sprintf("Welcome to %s", u.Config.ServerName),
+		fmt.Sprintf("Welcome to %s", u.Config.Server.Name),
 	))
 
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_YOURHOST,
 		[]string{u.NickName},
 		fmt.Sprintf("Your host is %s, running version %s",
-			u.Config.ServerName,
+			u.Config.Server.Name,
 			version.Version(),
 		),
 	))
 
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_CREATED,
 		[]string{u.NickName},
 		fmt.Sprintf("This server was created %s",
-			u.Config.ServerCreatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
+			u.Config.Server.CreatedAt), //u.Config.ServerCreatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
+
 	))
 
 	u.SendMessage(message.New(
-		u.Config.ServerName,
+		u.Config.Server.Name,
 		message.RPL_MYINFO,
 		[]string{u.NickName},
-		fmt.Sprintf("%s %s", u.Config.ServerName, version.Version()),
+		fmt.Sprintf("%s %s", u.Config.Server.Name, version.Version()),
 	))
 
 	// u.SendMessage(message.New(

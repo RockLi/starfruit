@@ -33,7 +33,7 @@ func (module *Ison) Handle(s *server.Server, u *user.User, m *message.Message) e
 	}
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_ISON,
 		[]string{u.NickName},
 		strings.Join(existedNickNames, " "),

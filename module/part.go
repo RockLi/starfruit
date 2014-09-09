@@ -20,7 +20,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	if len(m.Params) < 1 {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NEEDMOREPARAMS,
 			nil,
 			"Need more parameters.",
@@ -44,7 +44,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 		if cnl == nil {
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.ERR_NOSUCHCHANNEL,
 				[]string{channelName},
 				"You are not on that channel.",
@@ -55,7 +55,7 @@ func (module *Part) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 		if !s.IsUserJoinedChannel(u.Id, cnl.Id) {
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.ERR_NOTONCHANNEL,
 				[]string{
 					u.NickName,

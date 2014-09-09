@@ -20,12 +20,12 @@ func (module *Version) Handle(s *server.Server, u *user.User, m *message.Message
 	// VERSION [ <target> ]
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_VERSION,
 		[]string{
 			u.NickName,
 			fmt.Sprintf("%d.%d(%s)", version.Major, version.Minor, version.PatchLevel),
-			s.Config.ServerName,
+			s.Config.Server.Name,
 		},
 		version.MagicCode,
 	))

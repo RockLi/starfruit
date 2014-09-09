@@ -58,14 +58,14 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 		u.SendMessage(joinMsg)
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			"MODE",
 			[]string{cnl.String(), "+nt"},
 			nil,
 		))
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_NAMREPLY,
 			[]string{
 				u.NickName,
@@ -83,7 +83,7 @@ func (module *Join) Handle(s *server.Server, u *user.User, m *message.Message) e
 		))
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_ENDOFNAMES,
 			[]string{
 				u.NickName,

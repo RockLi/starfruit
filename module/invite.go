@@ -28,7 +28,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 	invitedUser := s.GetUserByNickName(nick)
 	if invitedUser == nil {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NOSUCHNICK,
 			[]string{
 				u.NickName,
@@ -44,7 +44,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 	if c != nil {
 		if !s.IsUserJoinedChannel(u.Id, c.Id) {
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.ERR_NOTONCHANNEL,
 				[]string{
 					u.NickName,
@@ -56,7 +56,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 			return nil
 		} else if s.IsUserJoinedChannel(invitedUser.Id, c.Id) {
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.ERR_USERONCHANNEL,
 				[]string{
 					u.NickName,
@@ -71,7 +71,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 	}
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INVITING,
 		[]string{
 			u.NickName,
@@ -92,7 +92,7 @@ func (module *Invite) Handle(s *server.Server, u *user.User, m *message.Message)
 
 	if invitedUser.IsAway() {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_AWAY,
 			[]string{
 				u.NickName,

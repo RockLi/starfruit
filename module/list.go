@@ -40,7 +40,7 @@ func (module *List) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 	for _, cnl := range channelsToList {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_LIST,
 			[]string{
 				u.NickName,
@@ -52,7 +52,7 @@ func (module *List) Handle(s *server.Server, u *user.User, m *message.Message) e
 	}
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_LISTEND,
 		[]string{u.NickName},
 		"End of /LIST.",

@@ -18,7 +18,7 @@ func (module *Ping) Handle(s *server.Server, u *user.User, m *message.Message) e
 	// PING [SERVER]
 	if len(m.Params) != 1 {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NOORIGIN,
 			[]string{u.NickName},
 			"No origin specified",
@@ -30,9 +30,9 @@ func (module *Ping) Handle(s *server.Server, u *user.User, m *message.Message) e
 	server := m.Params[0]
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		"PONG",
-		[]string{s.Config.ServerName},
+		[]string{s.Config.Server.Name},
 		server,
 	))
 

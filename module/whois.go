@@ -20,7 +20,7 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 
 	if len(m.Params) != 1 {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NEEDMOREPARAMS,
 			nil,
 			"Need more params",
@@ -38,7 +38,7 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 		}
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_WHOISUSER,
 			[]string{
 				u.NickName,
@@ -51,20 +51,20 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 		))
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_WHOISSERVER,
 			[]string{
 				u.NickName,
 				target.NickName,
-				s.Config.ServerName,
+				s.Config.Server.Name,
 			},
-			s.Config.ServerName,
+			s.Config.Server.Name,
 		))
 
 		joinedChannels := s.GetJoinedChannels(u.Id)
 		if len(joinedChannels) > 0 {
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.RPL_WHOISCHANNELS,
 				[]string{
 					u.NickName,
@@ -81,7 +81,7 @@ func (module *Whois) Handle(s *server.Server, u *user.User, m *message.Message) 
 		}
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_ENDOFWHOIS,
 			[]string{
 				u.NickName,

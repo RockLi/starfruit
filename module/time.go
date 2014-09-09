@@ -22,11 +22,11 @@ func (module *Time) Handle(s *server.Server, u *user.User, m *message.Message) e
 	now := time.Now()
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_TIME,
 		[]string{
 			u.NickName,
-			s.Config.ServerName,
+			s.Config.Server.Name,
 		},
 		fmt.Sprintf("%s", now.Format("Jan 2, 2006 at 3:04pm (MST)")),
 	))

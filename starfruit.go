@@ -20,20 +20,34 @@ import (
 	"github.com/flatpeach/starfruit/user"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
 var (
-	s          *server.Server
-	commands   map[string]interface{}
-	configFile string
+	s                      *server.Server
+	commands               map[string]interface{}
+	configEnableAuth       bool
+	configFile             string
+	configServerName       string
+	configPassword         string
+	configIp               string
+	configPorts            string
+	configDisabledCommands string
+	configMotdFile         string
+	configSSL              bool
+	configCertFile         string
+	configKeyFile          string
+	configPingUserInterval int
+	configUserTimeout      int
 )
 
 func doUserChecking() {
 	for {
-		time.Sleep(time.Duration(s.Config.PingUserInterval) * time.Second)
+		time.Sleep(time.Duration(s.Config.Recycle.PingInterval) * time.Second)
 		ts := time.Now().Unix()
-		log.Printf("[SERVER] Ready to scan the status of all users: %d", ts)
+		log.Printf("[starfruit] Ready to scan the status of all users: %d", ts)
 
 		users := s.GetAllUsers()
 		for _, u := range users {
@@ -41,12 +55,12 @@ func doUserChecking() {
 				continue
 			}
 
-			if u.LastPongTime != 0 && ts-u.LastPongTime > int64(s.Config.UserTimeout) {
+			if u.LastPongTime != 0 && ts-u.LastPongTime > int64(s.Config.Recycle.UserTimeout) {
 				timeoutMsg := message.New(
 					u.Full(),
 					"QUIT",
 					nil,
-					fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.UserTimeout)),
+					fmt.Sprintf("ping timeout after %d seconds.", int64(s.Config.Recycle.UserTimeout)),
 				)
 
 				s.RemoveUser(u.Id)
@@ -60,7 +74,7 @@ func doUserChecking() {
 					nil,
 					"ERROR",
 					nil,
-					fmt.Sprintf("Closing Link: %s (Ping timeout: %d seconds)", u.HostName, s.Config.UserTimeout),
+					fmt.Sprintf("Closing Link: %s (Ping timeout: %d seconds)", u.HostName, s.Config.Recycle.UserTimeout),
 				))
 
 				u.SendMessage(nil)
@@ -70,7 +84,7 @@ func doUserChecking() {
 			}
 
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				"PING",
 				[]string{
 					fmt.Sprintf("%d", ts),
@@ -79,7 +93,7 @@ func doUserChecking() {
 			))
 		}
 
-		log.Printf("[SERVER] Done to scan the status of all users for this time")
+		log.Printf("[starfruit] Done to scan the status of all users for this time")
 
 	}
 }
@@ -119,7 +133,7 @@ func doRequest(u *user.User) {
 			log.Printf("[Client:%s] Unknown command %s", u.Conn.RemoteAddr(), m.Command)
 			if u.IsRegistered() {
 				u.SendMessage(message.New(
-					u.Config.ServerName,
+					u.Config.Server.Name,
 					message.ERR_UNKNOWNCOMMAND,
 					[]string{u.NickName, m.Command},
 					"Unknown command",
@@ -133,7 +147,7 @@ func doRequest(u *user.User) {
 			// We only allow limited commands before user registered successfully
 			if m.Command != "PASS" && m.Command != "USER" && m.Command != "NICK" {
 				u.SendMessage(message.New(
-					u.Config.ServerName,
+					u.Config.Server.Name,
 					message.ERR_NOTREGISTERED,
 					[]string{"*"},
 					"You have not registered",
@@ -144,7 +158,7 @@ func doRequest(u *user.User) {
 		} else {
 			if m.Command == "PASS" || m.Command == "USER" || m.Command == "SERVICE" {
 				u.SendMessage(message.New(
-					u.Config.ServerName,
+					u.Config.Server.Name,
 					message.ERR_ALREADYREGISTRED,
 					[]string{u.NickName},
 					"Already registered",
@@ -154,14 +168,13 @@ func doRequest(u *user.User) {
 			}
 		}
 
-		if s.Config.DisabledCommands != nil {
-			for _, command := range s.Config.DisabledCommands {
+		if len(s.Config.Server.DisabledCommands) > 0 {
+			for _, command := range s.Config.Server.DisabledCommands {
 				if command == m.Command {
-
 					switch m.Command {
 					case "USERS":
 						u.SendMessage(message.New(
-							u.Config.ServerName,
+							u.Config.Server.Name,
 							message.ERR_USERSDISABLED,
 							[]string{u.NickName},
 							"USERS has been disabled",
@@ -215,8 +228,37 @@ func registerCmd(cmd string, v interface{}) {
 	commands[cmd] = v
 }
 
+func doListen(listener net.Listener) {
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("[starfruit] Accept error: %s", err)
+			break
+		}
+
+		log.Printf("[starfruit] Accepted connection from: %s", conn.RemoteAddr())
+
+		u := user.New(s.Config, conn)
+
+		go doConn(u)
+	}
+
+}
+
 func init() {
-	flag.StringVar(&configFile, "config", "./ircd.conf", "config file of this irc server")
+	flag.StringVar(&configFile, "config", "", "config file of this irc server")
+	flag.BoolVar(&configEnableAuth, "enable-auth", false, "enable auth or not")
+	flag.StringVar(&configServerName, "name", "", "name of this IRC server")
+	flag.StringVar(&configPassword, "password", "", "password to join this server")
+	flag.StringVar(&configIp, "ip", "", "ip to bind, normally to choose 0.0.0.0")
+	flag.StringVar(&configPorts, "ports", "", "ports to bind, for multiple ports use comma to separate them")
+	flag.StringVar(&configDisabledCommands, "disabled-commands", "", "commands to disable of this server")
+	flag.StringVar(&configMotdFile, "motd", "", "motd file")
+	flag.BoolVar(&configSSL, "enable-ssl", false, "whether to enable ssl")
+	flag.StringVar(&configCertFile, "cert-file", "", "")
+	flag.StringVar(&configKeyFile, "key-file", "", "")
+	flag.IntVar(&configPingUserInterval, "ping-interval", -1, "")
+	flag.IntVar(&configUserTimeout, "user-timeout", -1, "")
 
 	s = server.New()
 	s.StartedAt = time.Now()
@@ -242,68 +284,118 @@ func init() {
 	registerCmd("TIME", &module.Time{})
 	registerCmd("TOPIC", &module.Topic{})
 	registerCmd("USER", &module.User{})
+	registerCmd("USERS", &module.Users{})
 	registerCmd("VERSION", &module.Version{})
 	registerCmd("WHO", &module.Who{})
 	registerCmd("WHOIS", &module.Whois{})
 }
 
 func main() {
-	flag.Parse()
-	err := s.Config.LoadFromJSONFile(configFile)
-	if err != nil {
-		log.Fatalf("[SERVER] Failed to load the configuration file :%s", err)
-		return
-	}
-
-	log.Printf("[SERVER] Load the configuration file :%s", configFile)
-
 	var (
 		listener net.Listener = nil
+		err      error
 	)
 
-	if s.Config.SSL {
-		cert, err := tls.LoadX509KeyPair("./certs/cert.pem", "./certs/key.pem")
+	flag.Parse()
+
+	if configFile != "" {
+		err := s.Config.LoadFromFile(configFile)
 		if err != nil {
-			log.Fatal("[SERVER] Failed to load certificates!")
+			log.Fatalf("[starfruit] Failed to load the configuration file :%s", err)
 			return
 		}
-
-		config := tls.Config{Certificates: []tls.Certificate{cert}}
-		config.Rand = rand.Reader
-
-		listener, err = tls.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort), &config)
-		if err != nil {
-			log.Fatalf("[SERVER] Failed to start the SERVER(SSL), %s", err)
-			return
-		}
-
-	} else {
-
-		listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort))
-		if err != nil {
-			log.Fatalf("[SERVER] Failed to start the SERVER, %s", err)
-		}
-
+		log.Printf("[starfruit] Load the configuration file :%s", configFile)
 	}
 
-	log.Printf("[SERVER] Server started at %s", fmt.Sprintf("%s:%d", s.Config.BindIP, s.Config.BindPort))
+	/* Handle overrided parameters from command line */
+	if configIp != "" {
+		s.Config.Server.Ip = configIp
+	}
 
-	log.Printf("[SERVER] Server started Goroutine doReply")
+	if configPorts != "" {
+		ports := strings.Split(configPorts, ",")
+		for _, port := range ports {
+			s.Config.Server.Ports = nil
+			port, err := strconv.Atoi(port)
+			if err != nil {
+				log.Fatalf("[starfruit] Port specified error, %s", err)
+				return
+			}
+			s.Config.Server.Ports = append(s.Config.Server.Ports, port)
+		}
+	}
+
+	if configServerName != "" {
+		s.Config.Server.Name = configServerName
+	}
+
+	if configEnableAuth && configPassword != "" {
+		s.Config.Server.Password = configPassword
+	}
+
+	if configMotdFile != "" {
+		s.Config.Motd.File = configMotdFile
+	}
+
+	if configSSL {
+		s.Config.Server.SSL = configSSL
+	}
+
+	if configCertFile != "" {
+		s.Config.Server.CertFile = configCertFile
+	}
+
+	if configKeyFile != "" {
+		s.Config.Server.KeyFile = configKeyFile
+	}
+
+	if configPingUserInterval > -1 {
+		s.Config.Recycle.PingInterval = configPingUserInterval
+	}
+
+	if configUserTimeout > -1 {
+		s.Config.Recycle.UserTimeout = configUserTimeout
+	}
+
+	if configDisabledCommands != "" {
+		commands := strings.Split(configDisabledCommands, ",")
+		s.Config.Server.DisabledCommands = commands
+	}
+
+	/* Listen on all ports */
+	for _, port := range s.Config.Server.Ports {
+		if s.Config.Server.SSL {
+			cert, err := tls.LoadX509KeyPair(s.Config.Server.CertFile, s.Config.Server.KeyFile)
+			if err != nil {
+				log.Fatal("[starfruit] Failed to load certificates!")
+				return
+			}
+
+			config := tls.Config{Certificates: []tls.Certificate{cert}}
+			config.Rand = rand.Reader
+
+			listener, err = tls.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.Server.Ip, port), &config)
+			if err != nil {
+				log.Fatalf("[starfruit] Failed to start the SERVER(SSL), %s", err)
+				return
+			}
+		} else {
+			listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.Server.Ip, port))
+			if err != nil {
+				log.Fatalf("[starfruit] Failed to start the SERVER, %s", err)
+			}
+		}
+
+		go doListen(listener)
+	}
+
+	log.Printf("[starfruit] Server started at %s",
+		fmt.Sprintf("%s[%v]", s.Config.Server.Ip, s.Config.Server.Ports))
 
 	go doUserChecking()
 
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Printf("[SERVER] Accept error: %s", err)
-			break
-		}
-
-		log.Printf("[SERVER] Accepted connection from: %s", conn.RemoteAddr())
-
-		u := user.New(s.Config, conn)
-
-		go doConn(u)
+		time.Sleep(10000)
 	}
 
 }

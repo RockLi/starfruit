@@ -19,7 +19,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	// VERSION [ <target> ]
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INFO,
 		[]string{
 			u.NickName,
@@ -28,7 +28,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	))
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INFO,
 		[]string{
 			u.NickName,
@@ -37,7 +37,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	))
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INFO,
 		[]string{
 			u.NickName,
@@ -46,7 +46,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	))
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INFO,
 		[]string{
 			u.NickName,
@@ -55,7 +55,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	))
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_INFO,
 		[]string{
 			u.NickName,
@@ -64,7 +64,7 @@ func (module *Info) Handle(s *server.Server, u *user.User, m *message.Message) e
 	))
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_ENDOFINFO,
 		[]string{
 			u.NickName,

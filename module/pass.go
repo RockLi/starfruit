@@ -23,14 +23,14 @@ func (module *Pass) Handle(s *server.Server, u *user.User, m *message.Message) e
 		pwd = m.Params[0]
 	}
 
-	if s.Config.Password == "" {
+	if s.Config.Server.Password == "" {
 		log.Printf("[COMMAND] PASS :no need to verify your password, server disabled that")
 		return nil
 	}
 
-	if pwd != s.Config.Password {
+	if pwd != s.Config.Server.Password {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_PASSWDMISMATCH,
 			[]string{"*"},
 			"Password incorrect",

@@ -25,7 +25,7 @@ func (module *Mode) Handle(s *server.Server, u *user.User, m *message.Message) e
 	nickName := m.Params[0]
 	if u.NickName != nickName {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_USERSDONTMATCH,
 			[]string{
 				u.NickName,
@@ -39,7 +39,7 @@ func (module *Mode) Handle(s *server.Server, u *user.User, m *message.Message) e
 	if len(m.Params) == 1 {
 		// Return current user modes
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_UMODEIS,
 			[]string{
 				u.NickName,
@@ -89,7 +89,7 @@ func (module *Mode) Handle(s *server.Server, u *user.User, m *message.Message) e
 
 		default:
 			u.SendMessage(message.New(
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				message.ERR_UMODEUNKNOWNFLAG,
 				[]string{
 					u.NickName,
@@ -110,7 +110,7 @@ func (module *Mode) Handle(s *server.Server, u *user.User, m *message.Message) e
 	}
 
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		"MODE",
 		[]string{
 			u.NickName,

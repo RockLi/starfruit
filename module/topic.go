@@ -29,7 +29,7 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 	cnl := s.FindChannelByName(channelName)
 	if cnl == nil {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NOSUCHCHANNEL,
 			[]string{u.NickName, channelName},
 			"No such channel",
@@ -40,7 +40,7 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 
 	if !s.IsUserJoinedChannel(u.Id, cnl.Id) {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NOTONCHANNEL,
 			[]string{u.NickName, channelName},
 			"You're not on that channel",
@@ -67,7 +67,7 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 
 	if cnl.Topic() == "" {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_NOTOPIC,
 			[]string{
 				u.NickName,
@@ -79,7 +79,7 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 		return nil
 	} else {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_TOPIC,
 			[]string{
 				u.NickName,
@@ -89,7 +89,7 @@ func (module *Topic) Handle(s *server.Server, u *user.User, m *message.Message) 
 		))
 
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_TOPICWHOTIME,
 			[]string{
 				u.NickName,

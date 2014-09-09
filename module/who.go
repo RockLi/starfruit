@@ -21,7 +21,7 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 
 	if len(m.Params) == 0 {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.ERR_NEEDMOREPARAMS,
 			nil,
 			"Need more params",
@@ -51,14 +51,14 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 	users = s.GetJoinedUsers(cnl.Id)
 	for _, user := range users {
 		u.SendMessage(message.New(
-			s.Config.ServerName,
+			s.Config.Server.Name,
 			message.RPL_WHOREPLY,
 			[]string{
 				u.NickName,
 				channelName,
 				"~" + user.UserName,
 				user.HostName,
-				s.Config.ServerName,
+				s.Config.Server.Name,
 				user.NickName,
 				"H@",
 			},
@@ -68,7 +68,7 @@ func (module *Who) Handle(s *server.Server, u *user.User, m *message.Message) er
 
 endofwho:
 	u.SendMessage(message.New(
-		s.Config.ServerName,
+		s.Config.Server.Name,
 		message.RPL_ENDOFWHO,
 		[]string{u.NickName, channelName},
 		"End of /WHO list.",

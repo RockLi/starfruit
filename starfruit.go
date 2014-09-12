@@ -284,7 +284,7 @@ func init() {
 	registerCmd("TIME", &module.Time{})
 	registerCmd("TOPIC", &module.Topic{})
 	registerCmd("USER", &module.User{})
-	registerCmd("USERS", &module.Users{})
+	//registerCmd("USERS", &module.Users{})
 	registerCmd("VERSION", &module.Version{})
 	registerCmd("WHO", &module.Who{})
 	registerCmd("WHOIS", &module.Whois{})
